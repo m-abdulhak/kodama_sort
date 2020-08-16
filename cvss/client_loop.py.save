@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+import socket
+import time
+import struct
+import sys
+import os.path
+import cvss_msg_pb2
+from Config import Config
+from Controller import Controller
+
+# Fixed port number for socket connection with server.
+PORT = 8078
+
+def client_loop(config, controller):
+    """Using the supplied Config object, connect with a server and launch an
+    infinite loop where the controller's update method is called with new sensor
+    data from the server.  The controller has the responsibility of interfacing
+    with any hardware on the robot."""
+
+    msg_timestamp = -1
+    
+    server_ip = config.serverIP
+    tagID = config.tagID
+    
+    last_timestamp = -1
+    last_update = -1
+    while True:
+        # Ping host machine running CVSensorSimulator, request sensor data
+        # for this robot.
+        #print("Pinging host")
+        requestData = cvss_msg_pb2.RequestData()
+        requestData.tag_id = tagID
+        
+        requestData2 = cvss_msg_pb2.RequestData()
+	requestData2.tag_id = 3
+
+        sensorSimulator = socket.socket()
+        try:
+            sensorSimulator.connect((server_ip, PORT))
+            
+            sensorSimulator.send(requestData.SerializeToString())
+            sensorData = cvss_msg_pb2.SensorData()
+            
+msg = sensorSimulator.recv(128)
+
+            
+            sensorSimulator.close()
+            sensorData.ParseFromString(msg)
+
+            print('pose', sensorData.pose.x, sensorData.pose.y,
+            sensorData.pose.yaw)
+
+            msg_timestamp = sensorData.timestamp.seconds + \
+                            sensorData.timestamp.nanos*1e-9
+            if msg_timestamp > last_timestamp:
+                controller.update(sensorData)
+                last_timestamp = msg_timestamp
+                last_update = time.time()
+
+        except socket.error as e:
+            print 'Error connecting to CVSS.'
+            break
+        finally:
+            time.sleep(0.05)
