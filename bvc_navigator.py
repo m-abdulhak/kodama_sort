@@ -9,6 +9,27 @@ class BvcNavigator:
     def __init__(self, goal_x, goal_y):
         self.goal = {"x": goal_x, "y": goal_y}
 
+    def setTempGoalInCell(self, cell):
+        # If cell is undefined (shouldn't happen in collision-free configurations) => set localgoal = goal
+        if(cell == None or len(cell)<2):
+            self.tempGoal = self.goal
+            return self.tempGoal
+
+        # If the goal is within the Buffered Voronoi cell => set localgoal = goal
+        if (cellContains(cell, self.goal)):
+            self.tempGoal = self.goal
+            return self.tempGoal
+
+        # If deadlocked or deadlock is expected or currently recovering from deadlock
+        # set local goal according to deadlock recovery policies
+        #if (this.setLocalGoalByDeadlockRecovery(cell)){
+        #return;
+        #}
+
+        # Default behavior: set local goal as the point in cell that is closest to the goal
+        self.tempGoal = self.findPointInCellClosestToGoal(cell)
+        return self.tempGoal
+
     def findPointInCellClosestToGoal(self, cell):
         tempG = None
         minDist = -1

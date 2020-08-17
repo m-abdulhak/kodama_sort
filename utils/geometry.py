@@ -1,9 +1,12 @@
 from __future__ import division
 from math import *
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
+import datetime
 
-#**************************************************
-#*************** Helper Functions *****************
-#**************************************************
+# **************************************************
+# *************** Helper Functions *****************
+# **************************************************
 
 def nxtCircIndx(i, length):
     return (i+1) % length
@@ -40,3 +43,15 @@ def closestPointInLineSegToPoint(x, y, x1, y1, x2, y2):
 def distanceBetween2Points(pos1, pos2):
     ret =  sqrt( (pos1["x"] - pos2["x"]) * (pos1["x"] - pos2["x"]) + (pos1["y"] - pos2["y"]) * (pos1["y"] - pos2["y"]))
     return ret
+
+def cellContains(cell, point):
+    return  len(cell) > 2 and pointIsInsidePolygon(point, cell)
+
+def pointIsInsidePolygon(point, polygon):
+    point = Point(point["x"], point["y"])
+    polygon = Polygon(polygon)
+    return polygon.contains(point)
+
+# print(pointIsInsidePolygon("True?", {"x":0.5, "y":0.5}, [[0,0], [0,1], [1,1], [1,0], [0,0]]))
+# print(pointIsInsidePolygon("False?", {"x":1.5, "y":0.5}, [[0,0], [0,1], [1,1], [1,0], [0,0]]))
+# print(pointIsInsidePolygon("False?", {"x":0.1, "y":0}, [[0,0], [0,1], [1,1], [1,0], [0,0]]))

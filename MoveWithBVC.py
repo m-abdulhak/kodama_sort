@@ -95,7 +95,7 @@ class MoveTowardsPointController(ThreePiController):
             return True
 
         # Get the intermediate goal within BVC Cell
-        temp_goal = self.bvcNav.findPointInCellClosestToGoal(bvcCell)
+        temp_goal = self.bvcNav.setTempGoalInCell(bvcCell)
 
         print("Goal:", self.goal, "tempGoal:", temp_goal)
 
@@ -120,4 +120,4 @@ class MoveTowardsPointController(ThreePiController):
 
 # Env: Min: 40, 40 Max: 610, 440 
 print("Starting")
-execute_with_three_pi(MoveTowardsPointController(70, 400))
+execute_with_three_pi(MoveTowardsPointController(500, 150))
