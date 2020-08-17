@@ -1,23 +1,63 @@
 #!/usr/bin/env python
-"""
-Task 1: A simple controller that always steers towards a goal point.  The robot will maintain constant forward speed, but alter its turn rate.
-"""
-
 from three_pi.ThreePi import ThreePi
 from ThreePiController import ThreePiController
 from math import sqrt, atan2, pi
 from utils.angles import get_smallest_signed_angular_difference
 from execute import execute_with_three_pi
+from bvc_navigator import *
 
 class MoveTowardsPointController(ThreePiController):
     def __init__(self, goal_x, goal_y):
-        self.goal_x = goal_x
-        self.goal_y = goal_y
+        self.goal = {"x": goal_x, "y": goal_y}
+
+        # Initialize BVC Navigator
+        self.bvcNav = BvcNavigator(goal_x, goal_y)
+
+        self.goalIsReachedDistance = 20
+        self.maxAngleToMoveStraightToGoal = 0.6
+        self.robotIsFacingGoalMaxAngle = 0.1
+
+        self.maxForwardSpeed = 0.3
+        self.maxAngularSpeed = 0.06
 
         self.maxMotorSpeed = 1
         self.maxMotorSpeedBack = -1
         self.minMotorSpeed = .3
         self.minMotorSpeedBack = -.3
+        
+
+    def getFowrardAndAngularSpeeds(self, distanceToGoal, angleToGoal):
+        forwardSpeed, angularSpeed = 0, 0
+
+        print("Distance:", distanceToGoal, "Angle:", angleToGoal)
+        
+        if (distanceToGoal > self.goalIsReachedDistance):
+            # If goal is not reached
+
+            if (abs(angleToGoal) < self.maxAngleToMoveStraightToGoal):
+                # If angle to goal is small enough => move in a straight line
+                print("Moving Forward")
+                forwardSpeed = min(distanceToGoal/100, self.maxForwardSpeed) 
+            else:
+                # Else, turn in place => No Forward Speed
+                print("Not Moving Forward")
+                forwardSpeed = 0
+
+            
+            if (abs(angleToGoal) > self.robotIsFacingGoalMaxAngle):
+                # If robot is not facing goal, turn to goal
+                print("Turning")
+                angularSpeed = min(angleToGoal / pi, self.maxAngularSpeed)
+            else:
+                # Else do not turn (move in straight line)
+                print("Not Turning")
+                angularSpeed = 0
+
+        else:
+            forwardSpeed = 0
+            angularSpeed = 0
+
+        return forwardSpeed, angularSpeed
 
     def getMotorSpeeds(self, forwardSpeed, angularSpeed):
         v_right = forwardSpeed - angularSpeed / 2
@@ -44,40 +84,40 @@ class MoveTowardsPointController(ThreePiController):
         x = sensor_data.pose.x
         y = sensor_data.pose.y
         theta = sensor_data.pose.yaw
-        # print((x, y, theta))
+        print("Pos:", (x, y, theta))
 
-        # TODO: Get the intermediate goal within BVC Cell
-        goal_x = self.goal_x
-        goal_y = self.goal_y
+        # Check if final goal reached 
+        distanceToFinalGoal = distanceBetween2Points(self.goal, {"x": x, "y": y})
+        print(distanceToFinalGoal)
 
-        # Compute the relative position of the goal in polar coordinates (distanceToGoal, angleToGoal)
-        dx = goal_x - x
-        dy = goal_y - y
-
-        # Calculate the angle to the goal
-        distanceToGoal = sqrt(dx**2 + dy**2)
-        angleToGoal = get_smallest_signed_angular_difference(atan2(dy, dx), theta)
-
-        
-        if (distanceToGoal < 20 ):
+        if (distanceToFinalGoal < self.goalIsReachedDistance ):
             print "reached goal!"
             return True
 
-        # print(x, y, theta, "====>", self.goal_x, self.goal_y)
-        # print("Distance:", distanceToGoal, "Angle:", angleToGoal)
+        # Get the intermediate goal within BVC Cell
+        temp_goal = self.bvcNav.findPointInCellClosestToGoal(bvcCell)
+
+        print("Goal:", self.goal, "tempGoal:", temp_goal)
+
+        # Compute the relative position of the goal in polar coordinates (distanceToGoal, angleToGoal)
+        dx = temp_goal["x"] - x
+        dy = temp_goal["y"] - y
+
+        distanceToGoal = sqrt(dx**2 + dy**2)
+        angleToGoal = get_smallest_signed_angular_difference(atan2(dy, dx), theta)
 
         # Apply constants to convert to forward and angular speed (v, w)
-        forwardSpeed = (min(distanceToGoal/100, .3) if abs(angleToGoal) < 0.6 else 0) if distanceToGoal > 20 else 0
-        angularSpeed = (min(angleToGoal / pi, 0.2) if abs(angleToGoal) > 0.1  else 0) if distanceToGoal > 20 else 0
+        forwardSpeed, angularSpeed = self.getFowrardAndAngularSpeeds(distanceToGoal, angleToGoal)
 
         # Convert to right and left speeds and send to robot.
         v_left, v_right = self.getMotorSpeeds(forwardSpeed, angularSpeed)
 
-        # print('fwd',forwardSpeed, 'ang', angularSpeed, 'r', v_right, 'l', v_left) 
+        print('fwd',forwardSpeed, 'ang', angularSpeed, 'r', v_right, 'l', v_left) 
 
         self.three_pi.send_speeds(v_left, v_right)
 
         return False
 
+# Env: Min: 40, 40 Max: 610, 440 
 print("Starting")
-execute_with_three_pi(MoveTowardsPointController(100, 100))
+execute_with_three_pi(MoveTowardsPointController(70, 400))
