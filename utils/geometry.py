@@ -11,6 +11,24 @@ import datetime
 def nxtCircIndx(i, length):
     return (i+1) % length
 
+def closestPointInLineToPoint(x, y, x1, y1, x2, y2):
+    A = x - x1
+    B = y - y1
+    C = x2 - x1
+    D = y2 - y1
+
+    dot = A * C + B * D
+    len_sq = C * C + D * D
+    param = -1
+    
+    if (len_sq != 0):    # in case of 0 length line
+        param = dot / len_sq
+
+    xx = x1 + param * C
+    yy = y1 + param * D
+
+    return {"x":xx, "y":yy}
+
 def closestPointInLineSegToPoint(x, y, x1, y1, x2, y2):
     A = x - x1
     B = y - y1
@@ -44,6 +62,14 @@ def distanceBetween2Points(pos1, pos2):
     ret =  sqrt( (pos1["x"] - pos2["x"]) * (pos1["x"] - pos2["x"]) + (pos1["y"] - pos2["y"]) * (pos1["y"] - pos2["y"]))
     return ret
 
+def distanceBetweenPointAndLine(point, point1LineSeg, point2LineSeg):
+    ret =  distanceBetween2Points(point, closestPointInLineToPoint(point["x"], point["y"], point1LineSeg["x"], point1LineSeg["y"], point2LineSeg["x"], point2LineSeg["y"]))
+    return ret
+
+def distanceBetweenPointAndLineSeg(point, point1LineSeg, point2LineSeg):
+  ret =  distanceBetween2Points(point, closestPointInLineSegToPoint(point["x"], point["y"], point1LineSeg["x"], point1LineSeg["y"], point2LineSeg["x"], point2LineSeg["y"]))
+  return ret
+
 def cellContains(cell, point):
     return  len(cell) > 2 and pointIsInsidePolygon(point, cell)
 
@@ -52,6 +78,65 @@ def pointIsInsidePolygon(point, polygon):
     polygon = Polygon(polygon)
     return polygon.contains(point)
 
+def circleArea(radius):
+    return radius * radius * pi
+
+def minDistanceToLine(pointsArray, vecStart, vecEnd):
+    minDist = None
+
+    for p in pointsArray:
+        curDist = distanceBetweenPointAndLine(p, vecStart, vecEnd)
+
+        if (minDist == None):
+            minDist = curDist
+        else:
+            if (curDist < minDist):
+                minDist = curDist
+
+    return minDist
+
+def allPointsAreOnSameSideOfVector(pointsArray, vecStart, vecEnd):
+    prevSide = None
+
+    for p in pointsArray:
+        curSide = pointIsOnRightSideOfVector(p["x"], p["y"], vecStart["x"], vecStart["y"], vecEnd["x"], vecEnd["y"])
+
+        if(prevSide == None):
+            prevSide = pointIsOnRightSideOfVector(p["x"], p["y"], vecStart["x"], vecStart["y"], vecEnd["x"], vecEnd["y"])
+        else:
+            if(curSide != prevSide):
+                return False
+
+    return True
+
+def pointIsOnRightSideOfVector(x, y, x1, y1, x2, y2):
+    vec1 = {"x":x-x1,"y":-y+y1}
+    rot90Vec1 = {"x":-1*vec1["y"], "y":vec1["x"]}
+    vec2 = {"x":x2-x1, "y":-y2+y1}
+
+    dot2 = dotProduct(rot90Vec1, vec2) 
+    return  dot2>0
+
+def dotProduct(vec1, vec2):
+    return vec1["x"]*vec2["x"] + vec1["y"]*vec2["y"]
+
+# Test pointIsInsidePolygon:
 # print(pointIsInsidePolygon("True?", {"x":0.5, "y":0.5}, [[0,0], [0,1], [1,1], [1,0], [0,0]]))
 # print(pointIsInsidePolygon("False?", {"x":1.5, "y":0.5}, [[0,0], [0,1], [1,1], [1,0], [0,0]]))
 # print(pointIsInsidePolygon("False?", {"x":0.1, "y":0}, [[0,0], [0,1], [1,1], [1,0], [0,0]]))
+
+# Test circleArea:
+# print("3.14..?", circleArea(1))
+# print("12.566..?", circleArea(2))
+
+
+# Test allPointsAreOnSameSideOfVector:
+# print("True?", allPointsAreOnSameSideOfVector( [{"x":0, "y":1},{"x":0.5, "y":2},{"x":-2, "y":-1}], {"x":0, "y":0}, {"x":1, "y":1}) )
+# print("True?", allPointsAreOnSameSideOfVector( [{"x":0, "y":1},{"x":0.5, "y":2},{"x":-2, "y":-1}], {"x":1, "y":1}, {"x":0, "y":0}) )
+# print("False?", allPointsAreOnSameSideOfVector( [{"x":0, "y":1},{"x":0.5, "y":2},{"x":-2, "y":-10}], {"x":0, "y":0}, {"x":1, "y":1}) )
+# print("False?", allPointsAreOnSameSideOfVector( [{"x":0, "y":1},{"x":0.5, "y":2},{"x":-2, "y":-10}], {"x":1, "y":1}, {"x":0, "y":0}) )
+
+# print("True?", allPointsAreOnSameSideOfVector( [{"x":-1, "y":1},{"x":-0.5, "y":2},{"x":-2, "y":-1}], {"x":0, "y":0}, {"x":0, "y":1}) )
+# print("True?", allPointsAreOnSameSideOfVector( [{"x":-1, "y":1},{"x":-0.5, "y":2},{"x":-2, "y":-1}], {"x":0, "y":1}, {"x":0, "y":0}) )
+# print("False?", allPointsAreOnSameSideOfVector( [{"x":0, "y":1},{"x":0.5, "y":2},{"x":-2, "y":-10}], {"x":0, "y":0}, {"x":0, "y":1}) )
+# print("False?", allPointsAreOnSameSideOfVector( [{"x":0, "y":1},{"x":0.5, "y":2},{"x":-2, "y":-10}], {"x":0, "y":1}, {"x":0, "y":0}) )

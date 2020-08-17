@@ -13,7 +13,6 @@ class MoveTowardsPointController(ThreePiController):
         # Initialize BVC Navigator
         self.bvcNav = BvcNavigator(goal_x, goal_y)
 
-        self.goalIsReachedDistance = 20
         self.maxAngleToMoveStraightToGoal = 0.6
         self.robotIsFacingGoalMaxAngle = 0.1
 
@@ -31,7 +30,7 @@ class MoveTowardsPointController(ThreePiController):
 
         print("Distance:", distanceToGoal, "Angle:", angleToGoal)
         
-        if (distanceToGoal > self.goalIsReachedDistance):
+        if (not self.bvcNav.reached(self.goal)):
             # If goal is not reached
 
             if (abs(angleToGoal) < self.maxAngleToMoveStraightToGoal):
@@ -86,16 +85,15 @@ class MoveTowardsPointController(ThreePiController):
         theta = sensor_data.pose.yaw
         print("Pos:", (x, y, theta))
 
-        # Check if final goal reached 
-        distanceToFinalGoal = distanceBetween2Points(self.goal, {"x": x, "y": y})
-        print(distanceToFinalGoal)
+        self.bvcNav.update({"x": x, "y": y}, bvcCell, sensor_data)
 
-        if (distanceToFinalGoal < self.goalIsReachedDistance ):
+        # Check if final goal reached 
+        if (self.bvcNav.reached(self.goal)):
             print "reached goal!"
             return True
 
         # Get the intermediate goal within BVC Cell
-        temp_goal = self.bvcNav.setTempGoalInCell(bvcCell)
+        temp_goal = self.bvcNav.setTempGoalInCell()
 
         print("Goal:", self.goal, "tempGoal:", temp_goal)
 
@@ -120,4 +118,4 @@ class MoveTowardsPointController(ThreePiController):
 
 # Env: Min: 40, 40 Max: 610, 440 
 print("Starting")
-execute_with_three_pi(MoveTowardsPointController(500, 150))
+execute_with_three_pi(MoveTowardsPointController(560, 300))
