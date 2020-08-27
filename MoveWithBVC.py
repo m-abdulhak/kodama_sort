@@ -28,30 +28,29 @@ class MoveTowardsPointController(ThreePiController):
     def getFowrardAndAngularSpeeds(self, distanceToGoal, angleToGoal):
         forwardSpeed, angularSpeed = 0, 0
 
-        print("Distance:", distanceToGoal, "Angle:", angleToGoal)
+        # print("Distance:", distanceToGoal, "Angle:", angleToGoal)
         
+        # If goal is not reached
         if (not self.bvcNav.reached(self.goal)):
-            # If goal is not reached
 
+            # If angle to goal is small enough => move in a straight line
             if (abs(angleToGoal) < self.maxAngleToMoveStraightToGoal):
-                # If angle to goal is small enough => move in a straight line
-                print("Moving Forward")
+                # print("Moving Forward")
                 forwardSpeed = min(distanceToGoal/100, self.maxForwardSpeed) 
+            # Else, turn in place => No Forward Speed
             else:
-                # Else, turn in place => No Forward Speed
-                print("Not Moving Forward")
+                # print("Not Moving Forward")
                 forwardSpeed = 0
 
-            
+            # If robot is not facing goal, turn to goal
             if (abs(angleToGoal) > self.robotIsFacingGoalMaxAngle):
-                # If robot is not facing goal, turn to goal
-                print("Turning")
+                # print("Turning")
                 angularSpeed = min(angleToGoal / pi, self.maxAngularSpeed)
+            # Else do not turn (move in straight line)
             else:
-                # Else do not turn (move in straight line)
-                print("Not Turning")
+                # print("Not Turning")
                 angularSpeed = 0
-
+                
         else:
             forwardSpeed = 0
             angularSpeed = 0
@@ -83,19 +82,19 @@ class MoveTowardsPointController(ThreePiController):
         x = sensor_data.pose.x
         y = sensor_data.pose.y
         theta = sensor_data.pose.yaw
-        print("Pos:", (x, y, theta))
+        # print("Pos:", (x, y, theta))
 
         self.bvcNav.update({"x": x, "y": y}, bvcCell, sensor_data)
 
         # Check if final goal reached 
         if (self.bvcNav.reached(self.goal)):
-            print "reached goal!"
+            # print "reached goal!"
             return True
 
         # Get the intermediate goal within BVC Cell
         temp_goal = self.bvcNav.setTempGoalInCell()
 
-        print("Goal:", self.goal, "tempGoal:", temp_goal)
+        # print("Goal:", self.goal, "tempGoal:", temp_goal)
 
         # Compute the relative position of the goal in polar coordinates (distanceToGoal, angleToGoal)
         dx = temp_goal["x"] - x
@@ -110,7 +109,7 @@ class MoveTowardsPointController(ThreePiController):
         # Convert to right and left speeds and send to robot.
         v_left, v_right = self.getMotorSpeeds(forwardSpeed, angularSpeed)
 
-        print('fwd',forwardSpeed, 'ang', angularSpeed, 'r', v_right, 'l', v_left) 
+        # print('fwd',forwardSpeed, 'ang', angularSpeed, 'r', v_right, 'l', v_left) 
 
         self.three_pi.send_speeds(v_left, v_right)
 
@@ -118,4 +117,4 @@ class MoveTowardsPointController(ThreePiController):
 
 # Env: Min: 40, 40 Max: 610, 440 
 print("Starting")
-execute_with_three_pi(MoveTowardsPointController(560, 300))
+execute_with_three_pi(MoveTowardsPointController(500, 300))

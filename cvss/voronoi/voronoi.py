@@ -9,7 +9,7 @@ from shapely.geometry import Polygon
 
 import pyclipper
 
-def get_voronoi_cells(points, environment, buffered=False, offset=10, maxDistanceToEnvCenter=2000):
+def get_voronoi_cells(points, environment, buffered=False, offset=10, maxDistanceToEnvCenter=20000000):
     # Compute Voronoi Diagram
     vor = Voronoi(points)
 

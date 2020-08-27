@@ -75,8 +75,9 @@ def cellContains(cell, point):
 
 def pointIsInsidePolygon(point, polygon):
     point = Point(point["x"], point["y"])
-    polygon = Polygon(polygon)
-    return polygon.contains(point)
+    poly = Polygon(polygon)
+    # return poly.contains(point)
+    return point.distance(poly) < 1
 
 def circleArea(radius):
     return radius * radius * pi
@@ -117,13 +118,36 @@ def pointIsOnRightSideOfVector(x, y, x1, y1, x2, y2):
     dot2 = dotProduct(rot90Vec1, vec2) 
     return  dot2>0
 
+def translatePointInDirection(x1, y1, xVec, yVec):
+    return {"x":x1+xVec, "y":y1+yVec}
+
+def directionOfPerpendicularBisector(x1, y1, x2, y2, scale):
+    length = distanceBetween2Points({"x": x1, "y": y1},{"x": x2, "y": y2})
+    return {"x": scale*(y1-y2)/length, "y": scale*(x2-x1)/length}
+
+def shiftPointOfLineSegInDirOfPerpendicularBisector(x, y, x1, y1, x2, y2, scale):
+    dir = directionOfPerpendicularBisector(x1, y1, x2, y2, scale)
+    p1 = translatePointInDirection(x, y, dir["x"], dir["y"])
+    return p1
+
 def dotProduct(vec1, vec2):
     return vec1["x"]*vec2["x"] + vec1["y"]*vec2["y"]
 
+def xyPoint(p):
+    return {"x":p[0], "y":p[1]}
+
+l = [1,2,3,4,5]
+
+# for index in range(len(l) - 1, 0, -1):
+#     print(index, l[index])
+
+# for index,n in enumerate():
+    # print(index, n)
+
 # Test pointIsInsidePolygon:
-# print(pointIsInsidePolygon("True?", {"x":0.5, "y":0.5}, [[0,0], [0,1], [1,1], [1,0], [0,0]]))
-# print(pointIsInsidePolygon("False?", {"x":1.5, "y":0.5}, [[0,0], [0,1], [1,1], [1,0], [0,0]]))
-# print(pointIsInsidePolygon("False?", {"x":0.1, "y":0}, [[0,0], [0,1], [1,1], [1,0], [0,0]]))
+# print("True?", pointIsInsidePolygon({"x":0.5, "y":0.5}, [[0,0], [0,1], [1,1], [1,0], [0,0]]))
+# print("False?", pointIsInsidePolygon({"x":1.5, "y":0.5}, [[0,0], [0,1], [1,1], [1,0], [0,0]]))
+# print("False?", pointIsInsidePolygon({"x":0.1, "y":0}, [[0,0], [0,1], [1,1], [1,0], [0,0]]))
 
 # Test circleArea:
 # print("3.14..?", circleArea(1))

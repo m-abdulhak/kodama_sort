@@ -46,7 +46,7 @@ def client_loop(config, controller):
             # Calculate Voronoi Diagram
             bvcCells = get_voronoi_cells(voronoiPoints, envPoly, buffered=True, offset=robotRadius)
 
-            # print(cells)
+            # print(voronoiPoints, bvcCells)
 
             # Extract this robot cell from voronoi cells
             bvcCell = bvcCells[0]
