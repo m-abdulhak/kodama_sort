@@ -27,3 +27,12 @@ class Config:
         self.label = config['label']
         self.env = config['env']
         self.robotRadius = config['robotRadius']
+        try:
+            if(config['goalTag'] >= 0):
+                self.goalTag = config['goalTag']
+                print("Goal Tag Found in Configuration File, Setting Tag Position As Goal!")
+            else:
+                raise ValueError
+        except Exception as e:
+            print("No Goal Tag Specified in Configuration File, Using Goal From Script!")
+            self.goalTag = None

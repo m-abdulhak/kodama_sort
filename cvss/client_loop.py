@@ -26,12 +26,26 @@ def client_loop(config, controller):
     envPoly = Polygon(config.env)
     defaultVoronoiPoints = getDefaultVoronoiPoints(config.env)
     
+    # If a goal tag is specified in config, retrieve its CURRENT position and set it as goal 
+    if(config.goalTag != None):
+        configGoalTag = config.goalTag
+        # print("Tag Goal:", configGoalTag)
+        
+        configGoal = getSensorData(config, config.goalTag).pose
+        # print("Goal:", configGoal)
+
+        # TODO: Should handle configGoal vlaue is invalid case (no position for goal tag is found by CVSS)
+        # Not beeded now since CVSS is crashing on request for an unknown tagId   
+        controller.setGoal(configGoal.x, configGoal.y)
+    else:
+        configGoalTag = None
+
     # Initialize Time
     last_timestamp = -1
     last_update = -1
 
     while True:
-        sensorData = getSensorData(config)
+        sensorData = getSensorData(config, config.tagID)
 
         if(not sensorData):
             continue
@@ -41,7 +55,7 @@ def client_loop(config, controller):
 
         if msg_timestamp > last_timestamp: 
             # Setup voronoi points using robot and neighbors positions    
-            voronoiPoints = extractVoronoiPoints(sensorData, defaultVoronoiPoints)
+            voronoiPoints = extractVoronoiPoints(sensorData, defaultVoronoiPoints, configGoalTag)
 
             # Calculate Voronoi Diagram
             bvcCells = get_voronoi_cells(voronoiPoints, envPoly, buffered=True, offset=robotRadius)
@@ -58,10 +72,9 @@ def client_loop(config, controller):
             last_timestamp = msg_timestamp
             last_update = time.time()
 
-def getSensorData(config):
+def getSensorData(config, tagID):
     server_ip = config.serverIP
     port = config.port
-    tagID = config.tagID
 
     # Ping host machine running CVSensorSimulator, request sensor data for this robot.
     # print("Pinging host")
@@ -85,6 +98,8 @@ def getSensorData(config):
 
         # Parse Message
         sensorData.ParseFromString(msg)
+        
+        # print("sensorData", sensorData)
 
         return sensorData
         
@@ -92,10 +107,16 @@ def getSensorData(config):
         print 'Error connecting to CVSS.'
         return False
 
-def extractVoronoiPoints(sensorData, defaultVoronoiPoints):
+def extractVoronoiPoints(sensorData, defaultVoronoiPoints, configGoalTag):
+    # Remove goal tag from neighbors if exists
+    neighbors = []
+    for neighbor in sensorData.neighbors:
+        if (neighbor.yaw != configGoalTag):
+            neighbors.append(neighbor)
+
     # Get number of Voronoi Points (neighbors + 1, at least 4)  
-    neighborsCount = len(sensorData.neighbors)
-    voronoiPointsCount = neighborsCount + 1 if len(sensorData.neighbors) >= 3 else 4
+    neighborsCount = len(neighbors)
+    voronoiPointsCount = neighborsCount + 1 if len(neighbors) >= 3 else 4
     
     # Initialize empty voronoi points array
     if(voronoiPointsCount <= 4 ):
@@ -107,9 +128,11 @@ def extractVoronoiPoints(sensorData, defaultVoronoiPoints):
     points[0] = [sensorData.pose.x, sensorData.pose.y]
 
     # Set neighbors' positions as remaining elements
-    for indx, n in enumerate(sensorData.neighbors):
+    for indx, n in enumerate(neighbors):
         points[indx + 1] = [n.x, n.y]
     
+    # print("points", neighbors)
+
     return points
 
 def getDefaultVoronoiPoints(env):

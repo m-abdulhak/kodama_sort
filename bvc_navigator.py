@@ -46,6 +46,9 @@ class BvcNavigator:
         self.radius = 35
         robotArea = circleArea(self.radius)
         self.bvcAreaThreshold = robotArea * 3
+    
+    def setGoal(self, x, y):
+        self.goal = {"x": x, "y": y}     
 
     def update(self, position, cell, sensorData):
         self.position = position
@@ -63,8 +66,8 @@ class BvcNavigator:
 
         # If the goal is within the Buffered Voronoi cell => set localgoal = goal
         if (cellContains(cell, self.goal)):
-            log("Goal within bvc!")
             self.tempGoal = self.goal
+            log("Goal within bvc!", self.goal, "Temp Goal:", self.tempGoal)
             return self.tempGoal
 
         # If deadlocked or deadlock is expected or currently recovering from deadlock
@@ -372,10 +375,12 @@ class BvcNavigator:
         ret =  distanceBetween2Points(self.position, point)
         return ret
 
-logging = True
+logging = False
+
 def log(*msg):
     if(logging):
         print(msg)
+
 # print(closestPointInLineSegToPoint(0, 0, 0, 1, 1, 0))
 # bvcNav = BvcNavigator(0,0)
 # print(bvcNav.findPointInCellClosestToGoal([[0,1],[1,1],[1,0]]))

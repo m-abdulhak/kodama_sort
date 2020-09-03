@@ -24,6 +24,10 @@ class MoveTowardsPointController(ThreePiController):
         self.minMotorSpeed = .3
         self.minMotorSpeedBack = -.3
         
+    def setGoal(self, x, y):
+        print("Setting Goal To:", x, y)
+        self.goal = {"x": x, "y": y}   
+        self.bvcNav.setGoal(x, y)     
 
     def getFowrardAndAngularSpeeds(self, distanceToGoal, angleToGoal):
         forwardSpeed, angularSpeed = 0, 0
@@ -83,6 +87,7 @@ class MoveTowardsPointController(ThreePiController):
         y = sensor_data.pose.y
         theta = sensor_data.pose.yaw
         # print("Pos:", (x, y, theta))
+        # print(self.goal)
 
         self.bvcNav.update({"x": x, "y": y}, bvcCell, sensor_data)
 
@@ -117,4 +122,4 @@ class MoveTowardsPointController(ThreePiController):
 
 # Env: Min: 40, 40 Max: 610, 440 
 print("Starting")
-execute_with_three_pi(MoveTowardsPointController(500, 300))
+execute_with_three_pi(MoveTowardsPointController(150, 190))
