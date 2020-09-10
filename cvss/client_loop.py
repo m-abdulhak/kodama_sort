@@ -27,18 +27,23 @@ def client_loop(config, controller):
     defaultVoronoiPoints = getDefaultVoronoiPoints(config.env)
     
     # If a goal tag is specified in config, retrieve its CURRENT position and set it as goal 
+    configGoalTag = None
     if(config.goalTag != None):
         configGoalTag = config.goalTag
         # print("Tag Goal:", configGoalTag)
         
-        configGoal = getSensorData(config, config.goalTag).pose
-        # print("Goal:", configGoal)
+        goalData = getSensorData(config, config.goalTag)
+        
+        if goalData and goalData.pose:
+            configGoal = goalData.pose
+            # print("Goal:", configGoal)
 
-        # TODO: Should handle configGoal vlaue is invalid case (no position for goal tag is found by CVSS)
-        # Not beeded now since CVSS is crashing on request for an unknown tagId   
-        controller.setGoal(configGoal.x, configGoal.y)
-    else:
-        configGoalTag = None
+            # TODO: Should handle configGoal vlaue is invalid case (no position for goal tag is found by CVSS)
+            # Not beeded now since CVSS is crashing on request for an unknown tagId   
+            controller.setGoal(configGoal.x, configGoal.y)
+        else:
+            print("Could Not Retrieve a Valid Goal Tag Position from CVSS, Using Goal From Script!")
+            configGoalTag = None
 
     # Initialize Time
     last_timestamp = -1
@@ -65,7 +70,7 @@ def client_loop(config, controller):
             # Extract this robot cell from voronoi cells
             bvcCell = bvcCells[0]
 
-            if(controller.update(sensorData, bvcCell)):
+            if(controller.update(sensorData, bvcCell, configGoalTag)):
                 print 'Goal Reached'
                 return
             
@@ -91,7 +96,7 @@ def getSensorData(config, tagID):
         # Send request for sensor data
         sensorSimulator.send(requestData.SerializeToString())
         sensorData = cvss_msg_pb2.SensorData()
-        msg = sensorSimulator.recv(128)
+        msg = sensorSimulator.recv(256)
         
         # Close Connection
         sensorSimulator.close()
@@ -106,6 +111,9 @@ def getSensorData(config, tagID):
     except socket.error as e:
         print 'Error connecting to CVSS.'
         return False
+    except Exception as e:
+        print ('Error getting sensor Data: ')
+        print str(e)
 
 def extractVoronoiPoints(sensorData, defaultVoronoiPoints, configGoalTag):
     # Remove goal tag from neighbors if exists

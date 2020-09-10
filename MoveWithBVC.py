@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import os
+import time
 from three_pi.ThreePi import ThreePi
 from ThreePiController import ThreePiController
 from math import sqrt, atan2, pi
@@ -23,6 +25,15 @@ class MoveTowardsPointController(ThreePiController):
         self.maxMotorSpeedBack = -1
         self.minMotorSpeed = .3
         self.minMotorSpeedBack = -.3
+
+        # logging
+        self.logSize = 0
+        now = time.time()
+        self.logFileLocation = 'logs/log-{}.txt'.format(now)
+        try:
+            self.logFile = open(self.logFileLocation, 'w+')
+        except Exception as e:
+            print("Error! Cannot Open Log File!", e)
         
     def setGoal(self, x, y):
         print("Setting Goal To:", x, y)
@@ -81,7 +92,7 @@ class MoveTowardsPointController(ThreePiController):
 
         return v_left, v_right
 
-    def update(self, sensor_data, bvcCell):
+    def update(self, sensor_data, bvcCell, goalTag):
         # Get Robot Position and orientation
         x = sensor_data.pose.x
         y = sensor_data.pose.y
@@ -89,7 +100,9 @@ class MoveTowardsPointController(ThreePiController):
         # print("Pos:", (x, y, theta))
         # print(self.goal)
 
-        self.bvcNav.update({"x": x, "y": y}, bvcCell, sensor_data)
+        self.logState(sensor_data, bvcCell)
+
+        self.bvcNav.update({"x": x, "y": y}, bvcCell, sensor_data, goalTag)
 
         # Check if final goal reached 
         if (self.bvcNav.reached(self.goal)):
@@ -119,6 +132,27 @@ class MoveTowardsPointController(ThreePiController):
         self.three_pi.send_speeds(v_left, v_right)
 
         return False
+
+    def logState(self, sensorData, bvcCell):
+        try:
+            if self.logFile and self.logFile.closed:
+                self.logFile = open(self.logFileLocation, 'w+')
+                
+            self.logFile.write(self.getLogStateRow(sensorData, bvcCell))
+            
+            self.logSize = self.logSize+1
+            if self.logSize > 1000:
+                self.logFile.flush()
+                self.logSize = 0
+                
+        except Exception as e:
+            print("Error! Write to Log File!", e)
+    
+    def getLogStateRow(self, sensorData, bvcCell):
+        now = time.time()
+        return str(now) + " , " + str(sensorData).replace("\n", "") + " , " + str(bvcCell) + " , " + str(self.goal) + "\n"
+
+
 
 # Env: Min: 40, 40 Max: 610, 440 
 print("Starting")

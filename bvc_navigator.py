@@ -35,7 +35,7 @@ class BvcNavigator:
         self.rightHandPoint = None
 
         self.remainingDeadlockManeuvers = 0
-        self.maxConsecutiveDeadlockManeuvers = 6
+        self.maxConsecutiveDeadlockManeuvers = 8
         self.maneuverDirection = 0
 
         self.simpleAlgTempGoalOutOfBvc = 0
@@ -50,10 +50,10 @@ class BvcNavigator:
     def setGoal(self, x, y):
         self.goal = {"x": x, "y": y}     
 
-    def update(self, position, cell, sensorData):
+    def update(self, position, cell, sensorData, goalTag):
         self.position = position
         self.bvc = cell
-        self.neighbors = sensorData.neighbors
+        self.neighbors = [n for n in sensorData.neighbors if n.yaw != goalTag]
 
     def setTempGoalInCell(self):
         cell = self.bvc
@@ -123,6 +123,7 @@ class BvcNavigator:
             
             # if another maneuver is needed => initiate it, localGoal is set there so return True
             # This is only for advanced deadlock recovery algorithm, simple always performs single maneuver
+            log("========> Remaining DL Maneuvers:", self.remainingDeadlockManeuvers)
             if(self.shouldPerformAnotherManeuver()):
                 log("Should perform Another Maneuver!")
                 self.initiateDeadlockManeuver(cell)
@@ -176,10 +177,18 @@ class BvcNavigator:
         closestIndex = None
         for index in range(len(cell) - 1, 0, -1):
             point = xyPoint(cell[index])
-            if(closestDistanceToGoal == None or distanceBetween2Points(point,self.tempGoal) < closestDistanceToGoal):
+            if(closestDistanceToGoal == None or distanceBetween2Points(point, self.tempGoal) < closestDistanceToGoal):
                 closestIndex = index
 
-        self.tempGoal = xyPoint(cell[closestIndex-1])
+        diff = 1
+        self.tempGoal = xyPoint(cell[closestIndex-diff])
+        print("set right {}".format(diff))
+        print("temp goal {}".format(self.tempGoal), "Pos: ", self.position, "reached?", self.reached(xyPoint(cell[closestIndex-diff])))
+        while(self.reached(xyPoint(cell[closestIndex-diff])) and diff < len(cell)):
+            diff += 1
+            self.tempGoal = xyPoint(cell[closestIndex-diff])
+            print("set right {}".format(diff))
+            print("temp goal {}".format(self.tempGoal))
 
     def setTempGoalAccToAdvancedDeadlockRec(self, cell):
         # returns temp goal according to advanced deadlock recovery algorithm
@@ -209,7 +218,7 @@ class BvcNavigator:
     def deadLockExpected(self, tempGoal):
         if(self.deadLockRecoveryAlgorithm == DeadLockRecovery.simple):
             if(self.facingRobot()):
-                log("Facing by robot!")
+                log("Facing robot!")
                 self.rightHandPoint = shiftPointOfLineSegInDirOfPerpendicularBisector(  \
                     self.position["x"], self.position["y"],                                   \
                     self.position["x"], self.position["y"],                                   \
@@ -242,6 +251,7 @@ class BvcNavigator:
         return False
 
     def facingRobot(self):
+        log("Testing facing robots!")
         curPos = self.position
         finalGoal = self.goal
         distanceToGoal =  distanceBetween2Points(curPos, finalGoal)
@@ -250,13 +260,20 @@ class BvcNavigator:
 
         robotsCloserToGoal = []
         for r in neighborsMeasurements["robots"]:
-            if(distanceBetween2Points({"x":r.x, "y":r.x}, finalGoal) < distanceToGoal):
+            neighborDistToGoal = distanceBetween2Points({"x":r.x, "y":r.x}, finalGoal)
+            neighborDistToMe = distanceBetween2Points({"x":r.x, "y":r.x}, curPos)
+            if(neighborDistToGoal < distanceToGoal and neighborDistToMe < distanceToGoal):
                 robotsCloserToGoal.append(r)
+                log("Neighbors Closer To Goal", r)
+                log("Distance To Goal: ", neighborDistToGoal, " < ", distanceToGoal, "(My dist To Goal)" )
+                log("Distance To Me: ", neighborDistToMe, " < ", distanceToGoal, "(My dist To Goal)" )
         
         facingRobots = []
         for n in robotsCloserToGoal:
-            if(distanceBetweenPointAndLineSeg({"x":n.x, "y":n.x}, curPos, finalGoal) < self.radius):
+            neighborDistanceToLineLessThanRadius = distanceBetweenPointAndLineSeg({"x":n.x, "y":n.x}, curPos, finalGoal) < self.radius
+            if(neighborDistanceToLineLessThanRadius):
                 facingRobots.append(n)
+                log("Facing Robot: ", n )
 
         return len(facingRobots) > 0
 
@@ -265,8 +282,7 @@ class BvcNavigator:
         
         self.lastDeadlockNeighborsCount = len(self.getNeighborsMeasurementsWithin(self.tempGoal, self.radius*5)["robots"])
         
-        self.remainingDeadlockManeuvers = self.maxConsecutiveDeadlockManeuvers/2 if self.lastDeadlockNeighborsCount == 1 \
-            else self.maxConsecutiveDeadlockManeuvers
+        self.remainingDeadlockManeuvers = self.maxConsecutiveDeadlockManeuvers
         
         self.maneuverDirection = self.getManeuverDirAccToDLRecoveryAlgo(cell)
 
@@ -312,18 +328,19 @@ class BvcNavigator:
     def neighborsAvoided(self):
         robotsMeasurements = self.getNeighborsMeasurementsWithin(self.lastDeadlockPosition, self.lastDeadlockAreaRadius)
         robots = robotsMeasurements["robots"]
+        print(robots)
         robotPositions = map(lambda r: {"x": r.x, "y": r.y}, robots)
         
-        if(self.lastDeadlockNeighborsCount > 1):
-            if(len(robots) < 2):
-                # log("Successfully Recovered From Deadlock! 1")
-                return True
+        if(len(robots) == self.lastDeadlockNeighborsCount and self.lastDeadlockNeighborsCount > 1):
+            # if(len(robots) < 2):
+            #     log("Successfully Recovered From Deadlock! Neighbors Avoided 1")
+            #     return True
 
             neighborsOnSameSide = allPointsAreOnSameSideOfVector(robotPositions, self.position, self.goal)
             neighborsAvoided = minDistanceToLine(robotPositions, self.position, self.goal) > self.radius
 
             if(neighborsOnSameSide and neighborsAvoided):
-                # log("Successfully Recovered From Deadlock! 2")
+                log("Successfully Recovered From Deadlock! Neighbors Avoided 2")
                 return True
 
         return False
@@ -375,7 +392,7 @@ class BvcNavigator:
         ret =  distanceBetween2Points(self.position, point)
         return ret
 
-logging = False
+logging = True
 
 def log(*msg):
     if(logging):
