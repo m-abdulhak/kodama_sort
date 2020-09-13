@@ -29,9 +29,10 @@ class MoveTowardsPointController(ThreePiController):
         # logging
         self.logSize = 0
         now = time.time()
-        self.logFileLocation = 'logs/log-{}.txt'.format(now)
+        self.logFileLocation = 'logs/log-{}-{}.txt'.format(str(self.bvcNav.deadLockRecoveryAlgorithm), now)
         try:
             self.logFile = open(self.logFileLocation, 'w+')
+            print("Loggin to : {}".format(self.logFileLocation))
         except Exception as e:
             print("Error! Cannot Open Log File!", e)
         

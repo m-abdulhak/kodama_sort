@@ -2,6 +2,7 @@
 from __future__ import division
 from enum import Enum
 from math import sqrt, atan2, pi
+from random import random 
 from utils.angles import get_smallest_signed_angular_difference
 from utils.geometry import *
 from execute import execute_with_three_pi
@@ -112,10 +113,7 @@ class BvcNavigator:
             # if current maneuver's tempGoal is still valid (the current tempGoal has not been reached) 
             # => do not change it, return True
             if(self.deadLockTempGoalStillValid()):
-                log("Temp Goal Still Valid!")
                 return True
-            
-            log("Temp Goal No longer Valid!")
 
             # if not, then current maneuver's tempGoal has been reached => end current maneuver
             self.remainingDeadlockManeuvers -= 1
@@ -146,15 +144,18 @@ class BvcNavigator:
     
     def initiateDeadlockManeuver(self, cell):
         if (self.deadLockRecoveryAlgorithm == DeadLockRecovery.simple):
+            # If "DL" is caused by acing a robot, 
+            # try to follow right hand rule by moving to the right as much as possible within current bvc
             if (self.rightHandPoint != None):
                 log(self.rightHandPoint)
                 self.tempGoal = self.findPointInCellClosestToGoal(cell, self.rightHandPoint)
+            # Else; deadlock is caused by multiple robots in the way, follow simple DL recovery algorithm
             else:
                 self.setTempGoalAccToSimpleDeadlockRec(cell)
         elif (self.deadLockRecoveryAlgorithm == DeadLockRecovery.advanced):
             self.setTempGoalAccToAdvancedDeadlockRec(cell)
         
-        log("Finished Initiating!", self.tempGoal)
+        log("Finished Initiating Deadlock Maneuver! Temp Goal is: ", self.tempGoal)
         self.deadLockManeuverInProgress = True
 
     def setTempGoalAccToSimpleDeadlockRec(self, cell):
@@ -193,7 +194,7 @@ class BvcNavigator:
     def setTempGoalAccToAdvancedDeadlockRec(self, cell):
         # returns temp goal according to advanced deadlock recovery algorithm
         # vertices are the vertices of cell that lie on the current maneuver direction
-
+        log("Setting Temp Goal furthest from center!")
         vertecies = self.getVerteciesOnManeuverDir(cell, self.position, self.goal)
         self.tempGoal = self.getFurthestVertexFromLineSeg(vertecies, self.position, self.goal)
 
@@ -251,7 +252,7 @@ class BvcNavigator:
         return False
 
     def facingRobot(self):
-        log("Testing facing robots!")
+        log("Checking If Facing Robots!")
         curPos = self.position
         finalGoal = self.goal
         distanceToGoal =  distanceBetween2Points(curPos, finalGoal)
@@ -291,7 +292,7 @@ class BvcNavigator:
 
     def getManeuverDirAccToDLRecoveryAlgo(self, cell):
         # TODO: implement
-        return 1
+        return random() > 0.3
 
     def shouldPerformAnotherManeuver(self):
         # return  self.deadLockRecoveryAlgorithm == DeadLockRecovery.advanced and self.remainingDeadlockManeuvers > 0
@@ -301,7 +302,7 @@ class BvcNavigator:
         # Temp goal has not been reached
         tempGoalNotReached = not self.reached(self.tempGoal) 
         log("Pos:", self.position, "Temp Goal:", self.tempGoal, "Reached?", self.reached(self.tempGoal))
-        log("Temp goal has not been reached?", tempGoalNotReached)
+        log("Temp goal has been reached?", not tempGoalNotReached)
 
         # Temp goal is still within BVC
         # TODO: !CHANGED! changed cell from vc to bvc, is it correct?
@@ -322,8 +323,13 @@ class BvcNavigator:
             recoveryManeuverHasNotSucceeded = True
         else:
             recoveryManeuverHasNotSucceeded = not (self.deadLockManeuverInProgress and self.neighborsAvoided())
+            
+        log("Neighbors Avoided?", not recoveryManeuverHasNotSucceeded)
 
-        return tempGoalNotReached and currentVCellContainsTempGoal and recoveryManeuverHasNotSucceeded 
+        retVal = tempGoalNotReached and currentVCellContainsTempGoal and recoveryManeuverHasNotSucceeded 
+        log("Temp Goal Still Valid?", retVal)
+
+        return retVal
     
     def neighborsAvoided(self):
         robotsMeasurements = self.getNeighborsMeasurementsWithin(self.lastDeadlockPosition, self.lastDeadlockAreaRadius)
@@ -342,7 +348,7 @@ class BvcNavigator:
             if(neighborsOnSameSide and neighborsAvoided):
                 log("Successfully Recovered From Deadlock! Neighbors Avoided 2")
                 return True
-
+        
         return False
 
     def getNeighborsMeasurementsWithin(self, point, distance):
