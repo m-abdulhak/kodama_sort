@@ -25,25 +25,29 @@ def client_loop(config, controller):
     robotRadius = config.robotRadius
     envPoly = Polygon(config.env)
     defaultVoronoiPoints = getDefaultVoronoiPoints(config.env)
+    configGoalTagsRangeStart = config.goalTagsRangeStart
     
     # If a goal tag is specified in config, retrieve its CURRENT position and set it as goal 
     configGoalTag = None
     if(config.goalTag != None):
-        configGoalTag = config.goalTag
-        # print("Tag Goal:", configGoalTag)
-        
-        goalData = getSensorData(config, config.goalTag)
-        
-        if goalData and goalData.pose:
-            configGoal = goalData.pose
-            # print("Goal:", configGoal)
+        while(configGoalTag == None):
+            configGoalTag = config.goalTag
+            # print("Tag Goal:", configGoalTag)
+            
+            goalData = getSensorData(config, config.goalTag)
+            
+            if goalData and goalData.pose:
+                configGoal = goalData.pose
+                # print("Goal:", configGoal)
 
-            # TODO: Should handle configGoal vlaue is invalid case (no position for goal tag is found by CVSS)
-            # Not beeded now since CVSS is crashing on request for an unknown tagId   
-            controller.setGoal(configGoal.x, configGoal.y)
-        else:
-            print("Could Not Retrieve a Valid Goal Tag Position from CVSS, Using Goal From Script!")
-            configGoalTag = None
+                # TODO: Should handle configGoal vlaue is invalid case (no position for goal tag is found by CVSS)
+                # Not beeded now since CVSS is crashing on request for an unknown tagId   
+                controller.setGoal(configGoal.x, configGoal.y)
+            else:
+                print("Could Not Retrieve a Valid Goal Tag Position from CVSS, Retrying!")
+                configGoalTag = None
+            
+            time.sleep(1)
 
     # Initialize Time
     last_timestamp = -1
@@ -70,7 +74,7 @@ def client_loop(config, controller):
             # Extract this robot cell from voronoi cells
             bvcCell = bvcCells[0]
 
-            if(controller.update(sensorData, bvcCell, configGoalTag)):
+            if(controller.update(sensorData, bvcCell, configGoalTagsRangeStart)):
                 print 'Goal Reached'
                 return
             

@@ -4,6 +4,7 @@
     "serverIP": "192.168.2.168",
     "port": 8078,
     "tagID": 11,
-    "goalTag": 1,
+    "goalTag": 31,
+    "goalTagsRangeStart": 20,
     "label": "kodama11"
 }

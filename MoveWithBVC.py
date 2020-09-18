@@ -93,7 +93,7 @@ class MoveTowardsPointController(ThreePiController):
 
         return v_left, v_right
 
-    def update(self, sensor_data, bvcCell, goalTag):
+    def update(self, sensor_data, bvcCell, goalTagsRangeStart):
         # Get Robot Position and orientation
         x = sensor_data.pose.x
         y = sensor_data.pose.y
@@ -103,7 +103,7 @@ class MoveTowardsPointController(ThreePiController):
 
         self.logState(sensor_data, bvcCell)
 
-        self.bvcNav.update({"x": x, "y": y}, bvcCell, sensor_data, goalTag)
+        self.bvcNav.update({"x": x, "y": y}, bvcCell, sensor_data, goalTagsRangeStart)
 
         # Check if final goal reached 
         if (self.bvcNav.reached(self.goal)):

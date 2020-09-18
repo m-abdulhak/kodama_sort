@@ -27,6 +27,7 @@ class Config:
         self.label = config['label']
         self.env = config['env']
         self.robotRadius = config['robotRadius']
+        self.goalTagsRangeStart = config['goalTagsRangeStart']
         try:
             if(config['goalTag'] >= 0):
                 self.goalTag = config['goalTag']
