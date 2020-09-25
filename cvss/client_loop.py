@@ -27,6 +27,11 @@ def client_loop(config, controller):
     defaultVoronoiPoints = getDefaultVoronoiPoints(config.env)
     configGoalTagsRangeStart = config.goalTagsRangeStart
     
+    # Wait for connection to CVSS
+    waitForconnectionToCVSS(config, config.tagID)
+    print("Connection To CVSS Established!")
+    time.sleep(2)
+
     # If a goal tag is specified in config, retrieve its CURRENT position and set it as goal 
     configGoalTag = None
     if(config.goalTag != None):
@@ -80,6 +85,19 @@ def client_loop(config, controller):
             
             last_timestamp = msg_timestamp
             last_update = time.time()
+
+def waitForconnectionToCVSS(config, tagId):
+    response = None
+    while(response == None):            
+        response = getSensorData(config, tagId)
+        
+        if response and response.pose:
+            return
+        else:
+            print("Could Not Connec To CVSS, Retrying!")
+            response = None
+        
+        time.sleep(1)
 
 def getSensorData(config, tagID):
     server_ip = config.serverIP

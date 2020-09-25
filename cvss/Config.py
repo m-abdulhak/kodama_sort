@@ -31,7 +31,7 @@ class Config:
         try:
             if(config['goalTag'] >= 0):
                 self.goalTag = config['goalTag']
-                print("Goal Tag Found in Configuration File, Setting Tag Position As Goal!")
+                print("Goal Tag ({}) Found in Configuration File, Setting Tag Position As Goal!".format(self.goalTag))
             else:
                 raise ValueError
         except Exception as e:
