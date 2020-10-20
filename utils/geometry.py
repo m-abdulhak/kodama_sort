@@ -8,6 +8,10 @@ import datetime
 # *************** Helper Functions *****************
 # **************************************************
 
+# Ruler Function
+def pointOnLineSegmentPerRatio(startPoint, endPoint, ratio):
+  return {"x":(1-ratio)*startPoint["x"]+ratio*endPoint["x"], "y":(1-ratio)*startPoint["y"]+ratio*endPoint["y"]}
+
 def nxtCircIndx(i, length):
     return (i+1) % length
 

@@ -19,6 +19,9 @@ class BvcNavigator:
         self.position = None
         self.bvc = None
 
+        # TODO: get robot radius from config
+        self.radius = 35
+
         # Configurations
         self.goalIsReachedDistance = 20
 
@@ -38,13 +41,14 @@ class BvcNavigator:
         self.remainingDeadlockManeuvers = 0
         self.maxConsecutiveDeadlockManeuvers = 8
         self.maneuverDirection = 0
+        
+        self.detourPointToOutermostPointRatio = 0.3
+        self.detourPointMaxDistance = 3 * self.radius
 
         self.simpleAlgTempGoalOutOfBvc = 0
         self.simpleAlgTempGoalOutOfBvcMax = 10
 
         # Deadlock parameters
-        # TODO: get robot radius from config
-        self.radius = 35
         robotArea = circleArea(self.radius)
         self.bvcAreaThreshold = robotArea * 3
     
@@ -54,7 +58,7 @@ class BvcNavigator:
     def update(self, position, cell, sensorData, goalTagsRangeStart):
         self.position = position
         self.bvc = cell
-        print("Range:", goalTagsRangeStart)
+        # print("Range:", goalTagsRangeStart)
         self.neighbors = [n for n in sensorData.neighbors if n.yaw < goalTagsRangeStart]
 
     def setTempGoalInCell(self):
@@ -184,20 +188,44 @@ class BvcNavigator:
 
         diff = 1
         self.tempGoal = xyPoint(cell[closestIndex-diff])
-        print("set right {}".format(diff))
-        print("temp goal {}".format(self.tempGoal), "Pos: ", self.position, "reached?", self.reached(xyPoint(cell[closestIndex-diff])))
+        log("set right {}".format(diff))
+        log("temp goal {}".format(self.tempGoal), "Pos: ", self.position, "reached?", self.reached(xyPoint(cell[closestIndex-diff])))
         while(self.reached(xyPoint(cell[closestIndex-diff])) and diff < len(cell)):
             diff += 1
             self.tempGoal = xyPoint(cell[closestIndex-diff])
-            print("set right {}".format(diff))
-            print("temp goal {}".format(self.tempGoal))
+            log("set right {}".format(diff))
+            log("temp goal {}".format(self.tempGoal))
 
     def setTempGoalAccToAdvancedDeadlockRec(self, cell):
         # returns temp goal according to advanced deadlock recovery algorithm
         # vertices are the vertices of cell that lie on the current maneuver direction
         log("Setting Temp Goal furthest from center!")
         vertecies = self.getVerteciesOnManeuverDir(cell, self.position, self.goal)
-        self.tempGoal = self.getFurthestVertexFromLineSeg(vertecies, self.position, self.goal)
+        outermostPoint = self.getFurthestVertexFromLineSeg(vertecies, self.position, self.goal)
+        distanceToOutermostPoint = self.getDistanceTo(outermostPoint)
+        
+        log("distance to outermost:{}".format(distanceToOutermostPoint))
+        
+        if (distanceToOutermostPoint < self.detourPointMaxDistance):
+            log("Outermost point less than max, detour point set to outermost")
+            self.tempGoal = outermostPoint
+        else:
+            log("Outermost point larger than max, detour point set per ratio")
+            detourRatio = self.detourPointToOutermostPointRatio
+            
+            distanceWithDefaultRatioLongerThanMax = distanceToOutermostPoint * self.detourPointToOutermostPointRatio > self.detourPointMaxDistance
+            if (distanceWithDefaultRatioLongerThanMax) :
+                detourRatio = self.detourPointMaxDistance/distanceToOutermostPoint
+                log("Distance With Default Ratio ({}) larger than max distance ({}), detour point set with ratio from max distance".format(distanceToOutermostPoint * self.detourPointToOutermostPointRatio, self.detourPointMaxDistance))
+            else:
+                log("Distance With Default Ratio ({}) Not larger than max distance ({}), detour point with default ratio".format(distanceToOutermostPoint * self.detourPointToOutermostPointRatio, self.detourPointMaxDistance))
+
+            log("Ratio set to:{}".format(detourRatio))
+            
+            detourPoint = pointOnLineSegmentPerRatio(self.position, outermostPoint, detourRatio)
+            log("distance set to:{}".format(self.getDistanceTo(detourPoint)))
+            
+            self.tempGoal = detourPoint
 
     def deadlockRecoveryIsEnabled(self):
         return self.deadLockRecoveryAlgorithm != DeadLockRecovery.none
@@ -213,7 +241,7 @@ class BvcNavigator:
             self.stuckAtTempGoalDuration = 0
 
         ret = self.deadLockDetectionEnabled and self.stuckAtTempGoalDuration > self.deadLockDetectionDuration
-        log("Deadlocked? ", ret)
+        log("Position:{}, Deadlocked? {}".format(self.position, ret))
 
         return ret
 
@@ -292,9 +320,23 @@ class BvcNavigator:
         self.initiateDeadlockManeuver(cell)
 
     def getManeuverDirAccToDLRecoveryAlgo(self, cell):
-        # TODO: implement
-        return random() > 0.3
-
+        if (self.deadLockRecoveryAlgorithm == DeadLockRecovery.simple):
+            return random() > 0.3
+        elif (self.deadLockRecoveryAlgorithm == DeadLockRecovery.advanced):
+            if( random() > .7):
+                direc = random() > 0.5
+                direcStr = "Right" if direc else "Left"
+                log("Detour Direction Set By Random to: {}".format(direcStr))
+                return 
+            furthestPoint = self.getFurthestVertexFromLineSeg(cell, self.position, self.goal)
+            furthestPointDir = pointIsOnRightSideOfVector(furthestPoint["x"], furthestPoint["y"], \
+                                                            self.position["x"], self.position["y"], \
+                                                            self.goal["x"], self.goal["y"])
+                                                            
+            direcStr = "Right" if furthestPointDir else "Left"
+            log("Furthest Point: {}, direction set to: {}".format(furthestPoint, direcStr))
+            return furthestPointDir
+        
     def shouldPerformAnotherManeuver(self):
         # return  self.deadLockRecoveryAlgorithm == DeadLockRecovery.advanced and self.remainingDeadlockManeuvers > 0
         return  self.remainingDeadlockManeuvers > 0
@@ -335,7 +377,7 @@ class BvcNavigator:
     def neighborsAvoided(self):
         robotsMeasurements = self.getNeighborsMeasurementsWithin(self.lastDeadlockPosition, self.lastDeadlockAreaRadius)
         robots = robotsMeasurements["robots"]
-        print(robots)
+        log("Robots:{}".format(robots))
         robotPositions = map(lambda r: {"x": r.x, "y": r.y}, robots)
         
         if(len(robots) == self.lastDeadlockNeighborsCount and self.lastDeadlockNeighborsCount > 1):
