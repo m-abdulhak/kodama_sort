@@ -25,7 +25,10 @@ def client_loop(config, controller):
     robotRadius = config.robotRadius
     envPoly = Polygon(config.env)
     defaultVoronoiPoints = getDefaultVoronoiPoints(config.env)
-    
+
+    # Pass environment definition to controller
+    controller.setEnv(envPoly)
+
     # Wait for connection to CVSS
     waitForconnectionToCVSS(config, config.tagID)
     print("Connection To CVSS Established!")
@@ -153,8 +156,8 @@ def extractVoronoiPoints(sensorData, defaultVoronoiPoints):
     return points
 
 def getDefaultVoronoiPoints(env):
-    # Since the voronoi diagram library supports minimum of 4 points
-    # a default 4-points list is constructed using environment size
+    # Since the voronoi diagram library supports minimum of 4 points,
+    # a default 4-points list is constructed using environment boundary
     # with default points that lie outside of the environment so that 
     # for any point within the environemnt, its voronoi cell calculated
     # using this list contains the whole environment

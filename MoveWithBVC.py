@@ -7,10 +7,12 @@ from math import sqrt, atan2, pi
 from utils.angles import get_smallest_signed_angular_difference
 from execute import execute_with_three_pi
 from bvc_navigator import *
+from goalSelect import updateGoal
 
 class MoveTowardsPointController(ThreePiController):
     def __init__(self, goal_x, goal_y):
-        self.goal = {"x": goal_x, "y": goal_y}
+        # No default goal
+        self.goal = None
 
         # Initialize BVC Navigator
         self.bvcNav = BvcNavigator(goal_x, goal_y)
@@ -38,8 +40,12 @@ class MoveTowardsPointController(ThreePiController):
         
     def setGoal(self, x, y):
         print("Setting Goal To:", x, y)
-        self.goal = {"x": x, "y": y}   
-        self.bvcNav.setGoal(x, y)     
+        self.goal = {"x": x, "y": y}
+        self.bvcNav.setGoal(x, y)  
+
+    def setEnv(self, poly):
+        self.env = poly
+        print("Environment Boundary:", self.env.wkt)
 
     def getFowrardAndAngularSpeeds(self, distanceToGoal, angleToGoal):
         forwardSpeed, angularSpeed = 0, 0
@@ -106,6 +112,12 @@ class MoveTowardsPointController(ThreePiController):
 
         self.bvcNav.update({"x": x, "y": y}, bvcCell, sensor_data)
 
+        # Get new goal
+        print("*** Calculating New Goal ***")
+        newGoal = updateGoal(self, {"x": x, "y": y}, bvcCell, sensor_data, self.env)
+        print("*** New Goal ***", newGoal)
+        self.setGoal(newGoal["x"], newGoal["y"])
+
         # Check if final goal reached 
         if (self.bvcNav.reached(self.goal)):
             # print "reached goal!"
@@ -154,8 +166,6 @@ class MoveTowardsPointController(ThreePiController):
     def getLogStateRow(self, sensorData, bvcCell):
         now = time.time()
         return str(now) + " , " + str(sensorData).replace("\n", "") + " , " + str(bvcCell) + " , " + str(self.goal) + "\n"
-
-
 
 # Env: Min: 40, 40 Max: 610, 440 
 print("Starting")

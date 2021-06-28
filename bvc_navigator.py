@@ -14,7 +14,7 @@ class DeadLockRecovery(Enum):
 
 class BvcNavigator:
     def __init__(self, goal_x, goal_y):
-        self.goal = {"x": goal_x, "y": goal_y}
+        self.goal = None
         self.tempGoal = self.goal
         self.position = None
         self.bvc = None
@@ -39,7 +39,7 @@ class BvcNavigator:
         self.rightHandPoint = None
 
         self.remainingDeadlockManeuvers = 0
-        self.maxConsecutiveDeadlockManeuvers = 8
+        self.maxConsecutiveDeadlockManeuvers = 4
         self.maneuverDirection = 0
         
         self.detourPointToOutermostPointRatio = 0.3
@@ -53,7 +53,8 @@ class BvcNavigator:
         self.bvcAreaThreshold = robotArea * 3
     
     def setGoal(self, x, y):
-        self.goal = {"x": x, "y": y}     
+        self.goal = {"x": x, "y": y} 
+        self.tempGoal = self.goal    
 
     def update(self, position, cell, sensorData):
         self.position = position
@@ -64,7 +65,7 @@ class BvcNavigator:
         cell = self.bvc
 
         # If cell is undefined (shouldn't happen in collision-free configurations) => set localgoal = goal
-        if(cell == None or len(cell)<2):
+        if (cell == None or len(cell)<2):
             log("Error, Cell Not Defined!")
             self.tempGoal = self.goal
             return self.tempGoal
