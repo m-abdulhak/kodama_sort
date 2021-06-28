@@ -55,11 +55,10 @@ class BvcNavigator:
     def setGoal(self, x, y):
         self.goal = {"x": x, "y": y}     
 
-    def update(self, position, cell, sensorData, goalTagsRangeStart):
+    def update(self, position, cell, sensorData):
         self.position = position
         self.bvc = cell
-        # print("Range:", goalTagsRangeStart)
-        self.neighbors = [n for n in sensorData.neighbors if n.yaw < goalTagsRangeStart]
+        self.neighbors = [n for n in sensorData.nearby_robot_poses]
 
     def setTempGoalInCell(self):
         cell = self.bvc

@@ -25,7 +25,6 @@ def client_loop(config, controller):
     robotRadius = config.robotRadius
     envPoly = Polygon(config.env)
     defaultVoronoiPoints = getDefaultVoronoiPoints(config.env)
-    configGoalTagsRangeStart = config.goalTagsRangeStart
     
     # Wait for connection to CVSS
     waitForconnectionToCVSS(config, config.tagID)
@@ -34,25 +33,9 @@ def client_loop(config, controller):
 
     # If a goal tag is specified in config, retrieve its CURRENT position and set it as goal 
     configGoalTag = None
-    if(config.goalTag != None):
-        while(configGoalTag == None):
-            configGoalTag = config.goalTag
-            # print("Tag Goal:", configGoalTag)
-            
-            goalData = getSensorData(config, config.goalTag)
-            
-            if goalData and goalData.pose:
-                configGoal = goalData.pose
-                # print("Goal:", configGoal)
-
-                # TODO: Should handle configGoal vlaue is invalid case (no position for goal tag is found by CVSS)
-                # Not beeded now since CVSS is crashing on request for an unknown tagId   
-                controller.setGoal(configGoal.x, configGoal.y)
-            else:
-                print("Could Not Retrieve a Valid Goal Tag Position from CVSS, Retrying!")
-                configGoalTag = None
-            
-            time.sleep(1)
+    # Not beeded now since goal tags will no nolger be used to specify a goal
+    # controller.setGoal(configGoal.x, configGoal.y)
+    print("GOAL SET AS:", controller.goal)
 
     # Initialize Time
     last_timestamp = -1
@@ -69,7 +52,7 @@ def client_loop(config, controller):
 
         if msg_timestamp > last_timestamp: 
             # Setup voronoi points using robot and neighbors positions    
-            voronoiPoints = extractVoronoiPoints(sensorData, defaultVoronoiPoints, configGoalTag)
+            voronoiPoints = extractVoronoiPoints(sensorData, defaultVoronoiPoints)
 
             # Calculate Voronoi Diagram
             bvcCells = get_voronoi_cells(voronoiPoints, envPoly, buffered=True, offset=robotRadius)
@@ -79,7 +62,7 @@ def client_loop(config, controller):
             # Extract this robot cell from voronoi cells
             bvcCell = bvcCells[0]
 
-            if(controller.update(sensorData, bvcCell, configGoalTagsRangeStart)):
+            if(controller.update(sensorData, bvcCell)):
                 print 'Goal Reached'
                 return
             
@@ -92,8 +75,8 @@ def waitForconnectionToCVSS(config, tagId):
         response = getSensorData(config, tagId)
         
         if response and response.pose:
-            # return
-            print("Not Returning!")
+            # print("Returning!")
+            return
         else:
             print("Could Not Connec To CVSS, Retrying!")
             response = None
@@ -127,9 +110,9 @@ def getSensorData(config, tagID):
         # Parse Message
         sensorData.ParseFromString(msg)
         
-        print("+++++++++++++++++++++++++++++++++++++++++++++++++")
-        print("sensorData", sensorData)
-        print("+++++++++++++++++++++++++++++++++++++++++++++++++")
+        # print("+++++++++++++++++++++++++++++++++++++++++++++++++")
+        # print("sensorData", sensorData)
+        # print("+++++++++++++++++++++++++++++++++++++++++++++++++")
 
         return sensorData
         
@@ -140,12 +123,13 @@ def getSensorData(config, tagID):
         print ('Error getting sensor Data: ')
         print str(e)
 
-def extractVoronoiPoints(sensorData, defaultVoronoiPoints, configGoalTag):
+def extractVoronoiPoints(sensorData, defaultVoronoiPoints):
     # Remove goal tag from neighbors if exists
     neighbors = []
-    for neighbor in sensorData.neighbors:
-        if (neighbor.yaw != configGoalTag):
-            neighbors.append(neighbor)
+    for neighbor in sensorData.nearby_robot_poses:
+        neighbors.append(neighbor)
+
+    print("NEIGHBORS:", neighbors)
 
     # Get number of Voronoi Points (neighbors + 1, at least 4)  
     neighborsCount = len(neighbors)
@@ -164,7 +148,7 @@ def extractVoronoiPoints(sensorData, defaultVoronoiPoints, configGoalTag):
     for indx, n in enumerate(neighbors):
         points[indx + 1] = [n.x, n.y]
     
-    # print("points", neighbors)
+    print("VORONOI POINTS:", points)
 
     return points
 
