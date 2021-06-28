@@ -111,6 +111,7 @@ class MoveTowardsPointController(ThreePiController):
         self.logState(sensor_data, bvcCell)
 
         self.bvcNav.update({"x": x, "y": y}, bvcCell, sensor_data)
+        print("Cur Position:", self.bvcNav.position)
 
         # Get new goal
         print("*** Calculating New Goal ***")

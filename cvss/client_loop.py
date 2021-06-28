@@ -67,7 +67,7 @@ def client_loop(config, controller):
 
             if(controller.update(sensorData, bvcCell)):
                 print 'Goal Reached'
-                return
+                # return
             
             last_timestamp = msg_timestamp
             last_update = time.time()

@@ -3,12 +3,16 @@ import os
 from utils.geometry import *
 from shapely.geometry import Point, Polygon
 from shapely.ops import nearest_points
+from puck import *
+import random
 
 robotRadius = 35
 curGoalTimeSteps = 0
-minCurGoalTimeSteps = 100
+minCurGoalTimeSteps = 50
 
 def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
+  puckPositions = list(map(lambda p: {"x": p.x, "y": p.y}, sensor_data.nearby_target_positions))
+
   def getGoalFromClosestPointToEnvBounds(closestPoint):
     global curGoalTimeSteps
 
@@ -145,9 +149,73 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
 
     return newGoal
 
-  # bestPuck = selectBestNearbyPuck()
-    # if (bestPuck == null):
-  goal = getRandGoal()
-    # else:
-    #   robot.goal = getGoalFromPuck(bestPuck)
-  return goal
+  def getGoalFromPuck(puckPosition, normalizedAngle):
+    if (normalizedAngle < 35):
+      return puckPosition
+
+    closestPointInLine = getPuckManeuverGoal(robotPosition, puckPosition, 0)
+
+    if (normalizedAngle < 75):
+      return closestPointInLine
+
+    return getRandGoal()
+
+  def selectBestNearbyPuck():
+    global curGoalTimeSteps
+
+    if (controller.goal != None and \
+      curGoalTimeSteps < minCurGoalTimeSteps and \
+      not controller.bvcNav.reached(controller.goal)):
+      curGoalTimeSteps += 1
+      # return robot.bestPuck
+      return None
+
+    angleRatings = []
+    distanceRatings = []
+
+    def puckIsValid(position, group):
+      if (not puckReachedGoal(position, group)):
+        # g = getGoalFromPuck(p)
+        # condInRobotVorCell = pointIsInsidePolygon(p.position, robot.BVC);
+        # condReachableInEnv = robot.pointIsReachableInEnvBounds(g);
+        # return condInRobotVorCell and condReachableInEnv and condReachableOutOfStaticObs;
+        return True
+      return False
+
+    validPucks = list(filter(lambda p: puckIsValid(p, 0), puckPositions))
+
+    for puck in validPucks:
+      angleRatings.append([puck, puckNormalizedAngle(robotPosition, puck, 0)])
+      distanceRatings.append([puck, puckDistanceTo(puck, robotPosition)])
+
+    angleRatings.sort(key=lambda x: x[1])
+    distanceRatings.sort(key=lambda x: x[1])
+
+    print("Puck Ratings:", "Angles:", angleRatings, "distance:", distanceRatings)
+
+    angleRatsExist = len(angleRatings) > 0
+    distRatsExist = len(distanceRatings) > 0
+
+    bestPuck = None
+
+    if (distRatsExist and distanceRatings[0][1] < robotRadius * 2):
+      bestPuck = distanceRatings[0]
+    elif (angleRatsExist and random.random() < 0.3):
+      bestPuck = angleRatings[0]
+    elif (distRatsExist):
+      bestPuck = distanceRatings[0]
+
+    if (bestPuck != None):
+      curGoalTimeSteps = 0
+    
+    return bestPuck
+
+  print("Available Pucks:", puckPositions)
+  bestPuck = selectBestNearbyPuck()
+  print("bestPuck:",bestPuck)
+  if (bestPuck == None):
+    goal = getRandGoal()
+    return goal
+  else:
+    goal = getGoalFromPuck(bestPuck[0], bestPuck[1])
+    return goal

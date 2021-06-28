@@ -140,7 +140,7 @@ def dotProduct(vec1, vec2):
 def xyPoint(p):
     return {"x":p[0], "y":p[1]}
 
-l = [1,2,3,4,5]
+# l = [1,2,3,4,5]
 
 # for index in range(len(l) - 1, 0, -1):
 #     print(index, l[index])
@@ -168,3 +168,25 @@ l = [1,2,3,4,5]
 # print("True?", allPointsAreOnSameSideOfVector( [{"x":-1, "y":1},{"x":-0.5, "y":2},{"x":-2, "y":-1}], {"x":0, "y":1}, {"x":0, "y":0}) )
 # print("False?", allPointsAreOnSameSideOfVector( [{"x":0, "y":1},{"x":0.5, "y":2},{"x":-2, "y":-10}], {"x":0, "y":0}, {"x":0, "y":1}) )
 # print("False?", allPointsAreOnSameSideOfVector( [{"x":0, "y":1},{"x":0.5, "y":2},{"x":-2, "y":-10}], {"x":0, "y":1}, {"x":0, "y":0}) )
+
+# New for Pucks
+def radToDeg(radians):
+  return radians * (180 / pi)
+
+# /*
+# * Calculates the angle ABC (in radians)
+# *
+# * A first point, ex: {x: 0, y: 0}
+# * C second point
+# * B center point
+# */
+def angleBetweenThreePointsRad(A, B, C):
+  AB = sqrt((B["x"] - A["x"]) ** 2 + (B["y"] - A["y"]) ** 2)
+  BC = sqrt((B["x"] - C["x"]) ** 2 + (B["y"] - C["y"]) ** 2)
+  AC = sqrt((C["x"] - A["x"]) ** 2 + (C["y"] - A["y"]) ** 2)
+
+  return acos((BC * BC + AB * AB - AC * AC) / (2 * BC * AB))
+
+def angleBetweenThreePointsDeg(A, B, C):
+  angleRad = angleBetweenThreePointsRad(A, B, C)
+  return radToDeg(angleRad)
