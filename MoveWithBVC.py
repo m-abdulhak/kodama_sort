@@ -23,8 +23,8 @@ class MoveTowardsPointController(ThreePiController):
 
         self.maxMotorSpeed = 1
         self.maxMotorSpeedBack = -1
-        self.minMotorSpeed = .3
-        self.minMotorSpeedBack = -.3
+        self.minMotorSpeed = .5
+        self.minMotorSpeedBack = -.5
 
         # logging
         self.logSize = 0
@@ -76,6 +76,7 @@ class MoveTowardsPointController(ThreePiController):
     def getMotorSpeeds(self, forwardSpeed, angularSpeed):
         v_right = forwardSpeed - angularSpeed / 2
         v_left = forwardSpeed + angularSpeed / 2
+        print("=========================>", v_left,v_right)
 
         if forwardSpeed == 0 and angularSpeed != 0:
             if(v_right > 0 ):
@@ -127,8 +128,9 @@ class MoveTowardsPointController(ThreePiController):
 
         # Convert to right and left speeds and send to robot.
         v_left, v_right = self.getMotorSpeeds(forwardSpeed, angularSpeed)
+        v_left, v_right = v_left, v_right 
 
-        # print('fwd',forwardSpeed, 'ang', angularSpeed, 'r', v_right, 'l', v_left) 
+        print('fwd',forwardSpeed, 'ang', angularSpeed, 'r', v_right, 'l', v_left) 
 
         self.three_pi.send_speeds(v_left, v_right)
 

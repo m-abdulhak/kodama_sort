@@ -1,10 +1,10 @@
 {
     "env": [[10.0, 10.0], [10.0, 470.0], [640.0, 470.0], [640.0, 10.0]],
     "robotRadius": 35.0,
-    "serverIP": "192.168.2.168",
+    "serverIP": "192.168.2.76",
     "port": 8078,
-    "tagID": 11,
+    "tagID": 3,
     "goalTag": 31,
     "goalTagsRangeStart": 20,
-    "label": "kodama11"
+    "label": "kodama3"
 }

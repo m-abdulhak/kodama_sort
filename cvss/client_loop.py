@@ -88,11 +88,12 @@ def client_loop(config, controller):
 
 def waitForconnectionToCVSS(config, tagId):
     response = None
-    while(response == None):            
+    while(response == None or True):            
         response = getSensorData(config, tagId)
         
         if response and response.pose:
-            return
+            # return
+            print("Not Returning!")
         else:
             print("Could Not Connec To CVSS, Retrying!")
             response = None
@@ -107,7 +108,7 @@ def getSensorData(config, tagID):
     # print("Pinging host")
     requestData = cvss_msg_pb2.RequestData()
     requestData.tag_id = tagID
-    requestData.request_waypoints = False
+    # requestData.request_waypoints = False
     
     sensorSimulator = socket.socket()
 
@@ -118,7 +119,7 @@ def getSensorData(config, tagID):
         # Send request for sensor data
         sensorSimulator.send(requestData.SerializeToString())
         sensorData = cvss_msg_pb2.SensorData()
-        msg = sensorSimulator.recv(256)
+        msg = sensorSimulator.recv(128)
         
         # Close Connection
         sensorSimulator.close()
@@ -126,7 +127,9 @@ def getSensorData(config, tagID):
         # Parse Message
         sensorData.ParseFromString(msg)
         
-        # print("sensorData", sensorData)
+        print("+++++++++++++++++++++++++++++++++++++++++++++++++")
+        print("sensorData", sensorData)
+        print("+++++++++++++++++++++++++++++++++++++++++++++++++")
 
         return sensorData
         
