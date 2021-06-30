@@ -10,9 +10,13 @@ robotRadius = 35
 curGoalTimeSteps = 0
 minCurGoalTimeSteps = 50
 
+PUCK_DETECTION_RADIUS = robotRadius * 5
+BEST_PUCK_ANGLE_THRESH = 20
+ACCEPTABLE_PUCK_ANGLE_THRESH = 70
+
 def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
   puckPositions = list(map(lambda p: {"x": p.x, "y": p.y}, sensor_data.nearby_target_positions))
-  puckPoistions = list(filter(lambda p: distanceBetween2Points(robotPosition, p) < robotRadius * 5, puckPositions))
+  puckPoistions = list(filter(lambda p: distanceBetween2Points(robotPosition, p) < PUCK_DETECTION_RADIUS, puckPositions))
 
   def getGoalFromClosestPointToEnvBounds(closestPoint):
     global curGoalTimeSteps
@@ -89,7 +93,7 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
       print("New Goal", newGoal)
       # exit()
       
-    curGoalTimeSteps = minCurGoalTimeSteps
+    curGoalTimeSteps = 0
 
     return newGoal
 
@@ -156,12 +160,12 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
     return newGoal
 
   def getGoalFromPuck(puckPosition, normalizedAngle):
-    if (normalizedAngle < 20):
+    if (normalizedAngle < BEST_PUCK_ANGLE_THRESH):
       return puckPosition
 
     closestPointInLine = getPuckManeuverGoal(robotPosition, puckPosition, 0)
 
-    if (normalizedAngle < 75):
+    if (normalizedAngle < ACCEPTABLE_PUCK_ANGLE_THRESH):
       return closestPointInLine
 
     return getRandGoal()
@@ -191,8 +195,11 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
     validPucks = list(filter(lambda p: puckIsValid(p, 0), puckPositions))
 
     for puck in validPucks:
-      angleRatings.append([puck, puckNormalizedAngle(robotPosition, puck, 0)])
-      distanceRatings.append([puck, puckDistanceTo(puck, robotPosition)])
+      ang = puckNormalizedAngle(robotPosition, puck, 0)
+      if(puckDistanceTo(puck, robotPosition) < PUCK_DETECTION_RADIUS):
+        if(ang < ACCEPTABLE_PUCK_ANGLE_THRESH):
+          angleRatings.append([puck, ang])
+        distanceRatings.append([puck, puckDistanceTo(puck, robotPosition)])
 
     angleRatings.sort(key=lambda x: x[1])
     distanceRatings.sort(key=lambda x: x[1])
@@ -204,12 +211,12 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
 
     bestPuck = None
 
-    if (angleRatsExist and puckDistanceTo(angleRatings[0][0], robotPosition) < robotRadius * 5):
+    if (angleRatsExist):
       bestPuck = angleRatings[0]
-    elif (distRatsExist and distanceRatings[0][1]  < robotRadius * 5):
-      bestPuck = distanceRatings[0]
-    elif (angleRatsExist):
-      bestPuck = angleRatings[0]
+    # elif (distRatsExist and distanceRatings[0][1]  < robotRadius * 5):
+    #   bestPuck = distanceRatings[0]
+    # elif (angleRatsExist):
+    #   bestPuck = angleRatings[0]
 
     if (bestPuck != None):
       curGoalTimeSteps = 0
