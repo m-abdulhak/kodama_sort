@@ -5,7 +5,7 @@ from utils.geometry import *
 
 puckGroups = [
   {
-    "goal": {"x": 20, "y": 20},
+    "goal": {"x": 310, "y": 250},
     "radius": 50
   },
   {

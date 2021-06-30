@@ -12,6 +12,7 @@ minCurGoalTimeSteps = 50
 
 def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
   puckPositions = list(map(lambda p: {"x": p.x, "y": p.y}, sensor_data.nearby_target_positions))
+  puckPoistions = list(filter(lambda p: distanceBetween2Points(robotPosition, p) < robotRadius * 5, puckPositions))
 
   def getGoalFromClosestPointToEnvBounds(closestPoint):
     global curGoalTimeSteps
@@ -21,8 +22,8 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
     len = distanceBetween2Points(robotPosition, closestPoint)
 
     translationVec = { \
-      "x": ((closestPoint["x"] - robotPosition["x"]) * robotRadius) / (len * 5), \
-      "y": ((closestPoint["y"] - robotPosition["y"]) * robotRadius) / (len * 5), \
+      "x": ((closestPoint["x"] - robotPosition["x"]) * robotRadius) / (len * 10), \
+      "y": ((closestPoint["y"] - robotPosition["y"]) * robotRadius) / (len * 10), \
     }
 
     midPoint = translatePointInDirection( \
@@ -44,18 +45,16 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
       delta)
 
     newGoalPoint = Point(newGoal["x"], newGoal["y"])
-
-    if(newGoalPoint.distance(env) > 0):
-      cP, ___ = nearest_points(env.boundary, newGoalPoint)
-      newGoal = {"x": cP.x, "y": cP.y}
+    condGoalNotReachable = newGoalPoint.distance(env.boundary) < robotRadius
     
     print("New Goal:", newGoalPoint.wkt, \
       "Env:", env.wkt, \
-      "Dist from Point to new goal:", newGoalPoint.distance(env), \
+      "Dist from Point to new goal:", newGoalPoint.distance(env.boundary), \
       "Dist from Env bounds to new goal:", env.exterior.distance(newGoalPoint), \
-      "New goal not Valid (dist < robotRadius)?", newGoalPoint.distance(env) > -1 * robotRadius)
-    
-    if (newGoalPoint.distance(env) > -1 * robotRadius):
+      "New goal not Valid (dist < robotRadius)?", condGoalNotReachable)
+
+    if (condGoalNotReachable):
+      print("Goal Too Close to Edge Detected!")
       print("Old translation vector:", translationVec)
       translationVec["x"] *= -1
       translationVec["y"] *= -1
@@ -77,14 +76,18 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
         closestPoint["x"],
         closestPoint["y"],
         delta)
-
-      newGoalPoint = Point(newGoal["x"], newGoal["y"])
-
-      if(newGoalPoint.distance(env) > 0):
-        cP, ___ = nearest_points(env.boundary, newGoalPoint)
-        newGoal = {"x": cP.x, "y": cP.y}
       
       print("Modified new goal:", newGoal)
+
+    if (not pointIsInsidePolygon(newGoal, env)):
+      print("GOAL OUTSIDE ENV DETECTED:")
+      print("Old Goal", newGoal)
+      newGoal = {
+        "x": robotPosition["x"] + 10 * (robotPosition["x"] - closestPoint["x"]),
+        "y": robotPosition["y"] + 10 * (robotPosition["y"] - closestPoint["y"])
+      }
+      print("New Goal", newGoal)
+      # exit()
       
     curGoalTimeSteps = minCurGoalTimeSteps
 
@@ -93,10 +96,13 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
   def getRandGoal():
     global curGoalTimeSteps
 
+    print("Getting goal from Env!")
+
     if (controller.goal != None and \
       curGoalTimeSteps < minCurGoalTimeSteps and \
       not controller.bvcNav.reached(controller.goal)):
-      curGoalTimeSteps += 1
+      curGoalTimeSteps += 10
+      print("Prev goal")
       return controller.goal
 
     # environmentBounds = robot.scene.environmentBounds.map(
@@ -150,7 +156,7 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
     return newGoal
 
   def getGoalFromPuck(puckPosition, normalizedAngle):
-    if (normalizedAngle < 35):
+    if (normalizedAngle < 20):
       return puckPosition
 
     closestPointInLine = getPuckManeuverGoal(robotPosition, puckPosition, 0)
@@ -198,12 +204,12 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
 
     bestPuck = None
 
-    if (distRatsExist and distanceRatings[0][1] < robotRadius * 2):
-      bestPuck = distanceRatings[0]
-    elif (angleRatsExist and random.random() < 0.3):
+    if (angleRatsExist and puckDistanceTo(angleRatings[0][0], robotPosition) < robotRadius * 5):
       bestPuck = angleRatings[0]
-    elif (distRatsExist):
+    elif (distRatsExist and distanceRatings[0][1]  < robotRadius * 5):
       bestPuck = distanceRatings[0]
+    elif (angleRatsExist):
+      bestPuck = angleRatings[0]
 
     if (bestPuck != None):
       curGoalTimeSteps = 0
