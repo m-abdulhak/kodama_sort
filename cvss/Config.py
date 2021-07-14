@@ -27,6 +27,8 @@ class Config:
         self.label = config['label']
         self.env = config['env']
         self.robotRadius = config['robotRadius']
+        self.puckRadius = config['puckRadius']
+        self.staticObstacles = config['staticObstacles']
         try:
             if(config['goalTag'] >= 0):
                 self.goalTag = config['goalTag']

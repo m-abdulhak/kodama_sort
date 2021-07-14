@@ -3,6 +3,8 @@ import socket
 import time
 import struct
 import sys
+sys.path.insert(0,'..')
+
 import os.path
 import cvss_msg_pb2
 from Config import Config
@@ -12,6 +14,8 @@ import datetime
 import numpy as np
 from shapely.geometry import Polygon
 from voronoi.voronoi import get_voronoi_cells
+
+from puck import *
 
 def client_loop(config, controller):
     """Using the supplied Config object, connect with a server and launch an
@@ -23,7 +27,9 @@ def client_loop(config, controller):
     
     # Load configurations
     robotRadius = config.robotRadius
+    puckRadius = config.puckRadius
     envPoly = Polygon(config.env)
+    envStaticObstacles = map(lambda x: Polygon(x), config.staticObstacles)
     defaultVoronoiPoints = getDefaultVoronoiPoints(config.env)
 
     # Pass environment definition to controller
@@ -57,6 +63,13 @@ def client_loop(config, controller):
             # Setup voronoi points using robot and neighbors positions    
             voronoiPoints = extractVoronoiPoints(sensorData, defaultVoronoiPoints)
 
+            # Get static obstacles
+            staticObstacles = getStaticObstacles(sensorData, envStaticObstacles, puckRadius)
+
+            # TODO: get closest point to static obstacles
+            # TODO: pass closest point to get_vornoi_cells func and 
+            # split VC inside fucntion
+            
             # Calculate Voronoi Diagram
             bvcCells = get_voronoi_cells(voronoiPoints, envPoly, buffered=True, offset=robotRadius)
 
@@ -170,3 +183,14 @@ def getDefaultVoronoiPoints(env):
     maxY = max(yList)
 
     return [[minX-2*maxX, minY-2*maxY], [2*maxX, minY-2*maxY], [2*maxX, 2*maxY], [minX-2*maxX, 2*maxY]]
+
+def getStaticObstacles(sensorData, envStaticObstacles, puckRadius):
+    # TODO: Get puck group from sensor data
+    puckGroup = 0
+    
+    puckPositions = list(map(lambda p: {"x": p.x, "y": p.y}, sensorData.nearby_target_positions))
+    pucksInGoal = list(filter(lambda p: puckReachedGoal(p, puckGroup), puckPositions))
+    puckObstacles = list(map(lambda p: Point(p["x"], p["y"]).buffer(puckRadius), pucksInGoal))
+    obstacles = envStaticObstacles + puckObstacles
+
+    return obstacles
