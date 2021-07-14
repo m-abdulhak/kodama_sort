@@ -13,7 +13,9 @@ from Controller import Controller
 import datetime
 import numpy as np
 from shapely.geometry import Polygon
+from shapely.ops import nearest_points
 from voronoi.voronoi import get_voronoi_cells
+from utils.geometry import shiftPointOfLineSegInDirOfPerpendicularBisector
 
 from puck import *
 
@@ -66,12 +68,33 @@ def client_loop(config, controller):
             # Get static obstacles
             staticObstacles = getStaticObstacles(sensorData, envStaticObstacles, puckRadius)
 
-            # TODO: get closest point to static obstacles
-            # TODO: pass closest point to get_vornoi_cells func and 
-            # split VC inside fucntion
+            # Get closest point to static obstacles
+            closestPointToStaticObs = getClosesetPointOfStaticObstacles(sensorData, staticObstacles)
+
+            # Get another point on the splitting line be shifting the closest point 
+            # in direction of Perpendicular Bisector of curPosition---closestPoint line segment
+            point1 = shiftPointOfLineSegInDirOfPerpendicularBisector( \
+                closestPointToStaticObs.x, \
+                closestPointToStaticObs.y, \
+                sensorData.pose.x, \
+                sensorData.pose.y, \
+                closestPointToStaticObs.x, \
+                closestPointToStaticObs.y, \
+                10000)
+                
+            point2 = shiftPointOfLineSegInDirOfPerpendicularBisector( \
+                closestPointToStaticObs.x, \
+                closestPointToStaticObs.y, \
+                closestPointToStaticObs.x, \
+                closestPointToStaticObs.y, \
+                sensorData.pose.x, \
+                sensorData.pose.y, \
+                10000)
+
+            print("Split Points:", closestPointToStaticObs.wkt, point1, point2)
             
             # Calculate Voronoi Diagram
-            bvcCells = get_voronoi_cells(voronoiPoints, envPoly, buffered=True, offset=robotRadius)
+            bvcCells = get_voronoi_cells(voronoiPoints, envPoly, sensorData.pose, [point1, point2], buffered=True, offset=robotRadius)
 
             # print(voronoiPoints, bvcCells)
 
@@ -194,3 +217,15 @@ def getStaticObstacles(sensorData, envStaticObstacles, puckRadius):
     obstacles = envStaticObstacles + puckObstacles
 
     return obstacles
+
+def getClosesetPointOfStaticObstacles(sensorData, staticObstacles):
+    curPosition = Point(sensorData.pose.x, sensorData.pose.y)
+    closestPoints = list(map(lambda obs: nearest_points(obs, curPosition)[0], staticObstacles))
+    closestPoint = reduce(lambda a, b: b if (a == None or curPosition.distance(b) < curPosition.distance(a)) else a, closestPoints, None)
+    
+    # print(staticObstacles)
+    # print(map(lambda p: p.wkt, closestPoints))
+    # print(closestPoint)
+    # exit()
+
+    return closestPoint

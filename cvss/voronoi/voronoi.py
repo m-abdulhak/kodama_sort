@@ -5,11 +5,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from scipy.spatial import Voronoi
-from shapely.geometry import Polygon
+from shapely.geometry import Point, Polygon, LineString
+from shapely.ops import split
 
 import pyclipper
 
-def get_voronoi_cells(points, environment, buffered=False, offset=10, maxDistanceToEnvCenter=20000000):
+def get_voronoi_cells(points, environment, pose, splittingPoints, buffered=False, offset=10, maxDistanceToEnvCenter=20000000):
     # Compute Voronoi Diagram
     vor = Voronoi(points)
 
@@ -17,6 +18,7 @@ def get_voronoi_cells(points, environment, buffered=False, offset=10, maxDistanc
     regions, vertices = voronoi_finite_polygons_2d(vor,maxDistanceToEnvCenter)
 
     cells = []
+    first = True
 
     # Clip Voronoi Cells To Environment
     for index, region in enumerate(regions):
@@ -29,16 +31,26 @@ def get_voronoi_cells(points, environment, buffered=False, offset=10, maxDistanc
         # Clip Voroni Cells To Environment
         poly = poly.intersection(environment)
 
-        # print(poly)
+        # print("Voronoi Cell: ", poly.wkt)
         
         if(poly.is_empty):
             continue
+
+        if(first and splittingPoints and len(splittingPoints) == 2):
+            line = LineString(list(map(lambda p: Point(p["x"], p["y"]), splittingPoints)))
+            splitCells = split(poly, line)
+            curPos = Point(pose.x, pose.y)
+            correctCells = filter(lambda poly: curPos.within(poly), splitCells)
+            if(len(correctCells) >= 1):
+                poly = correctCells[0]
 
         # Add To Voronoi Cells List
         if(not buffered):
             cells.append(get_voronoi_cell(poly))
         else:
             cells.append(get_buffered_voronoi_cell(points[index], poly, offset))
+    
+    # exit()
 
     return cells
 
