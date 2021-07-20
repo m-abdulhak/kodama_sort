@@ -80,7 +80,7 @@ def client_loop(config, controller):
                 sensorData.pose.y, \
                 closestPointToStaticObs.x, \
                 closestPointToStaticObs.y, \
-                10000)
+                1000)
                 
             point2 = shiftPointOfLineSegInDirOfPerpendicularBisector( \
                 closestPointToStaticObs.x, \
@@ -89,9 +89,9 @@ def client_loop(config, controller):
                 closestPointToStaticObs.y, \
                 sensorData.pose.x, \
                 sensorData.pose.y, \
-                10000)
+                1000)
 
-            print("Split Points:", closestPointToStaticObs.wkt, point1, point2)
+            print("Split Points:", closestPointToStaticObs.wkt, point2, point1)
             
             # Calculate Voronoi Diagram
             bvcCells = get_voronoi_cells(voronoiPoints, envPoly, sensorData.pose, [point1, point2], buffered=True, offset=robotRadius)
@@ -105,6 +105,7 @@ def client_loop(config, controller):
                 print 'Goal Reached'
                 # return
             
+            print("Controller Update Done! Cycle Time:", time.time() - last_update)
             last_timestamp = msg_timestamp
             last_update = time.time()
 
@@ -127,7 +128,7 @@ def getSensorData(config, tagID):
     port = config.port
 
     # Ping host machine running CVSensorSimulator, request sensor data for this robot.
-    # print("Pinging host")
+    print("Pinging host")
     requestData = cvss_msg_pb2.RequestData()
     requestData.tag_id = tagID
     # requestData.request_waypoints = False
@@ -136,17 +137,21 @@ def getSensorData(config, tagID):
 
     try:
         # Connect To Server
+        print("Trying to connect to server!")
         sensorSimulator.connect((server_ip, port))
 
         # Send request for sensor data
+        print("Sending request for sensor data!")
         sensorSimulator.send(requestData.SerializeToString())
         sensorData = cvss_msg_pb2.SensorData()
         msg = sensorSimulator.recv(128)
         
         # Close Connection
+        print("Closing Connection!")
         sensorSimulator.close()
 
         # Parse Message
+        print("Parsing Message!")
         sensorData.ParseFromString(msg)
         
         # print("+++++++++++++++++++++++++++++++++++++++++++++++++")
@@ -207,13 +212,28 @@ def getDefaultVoronoiPoints(env):
 
     return [[minX-2*maxX, minY-2*maxY], [2*maxX, minY-2*maxY], [2*maxX, 2*maxY], [minX-2*maxX, 2*maxY]]
 
+def getObstaclePolygon(center, radius):
+    points = [
+        [center["x"] - radius, center["y"] + radius],
+        [center["x"] - radius, center["y"]         ],
+        [center["x"] - radius, center["y"] - radius],
+        [center["x"]         , center["y"] - radius],
+        [center["x"] + radius, center["y"] - radius],
+        [center["x"] + radius, center["y"]         ],
+        [center["x"] + radius, center["y"] + radius],
+        [center["x"]         , center["y"] + radius],
+    ]
+    return Polygon(points)
+
+
 def getStaticObstacles(sensorData, envStaticObstacles, puckRadius):
     # TODO: Get puck group from sensor data
     puckGroup = 0
+
     
     puckPositions = list(map(lambda p: {"x": p.x, "y": p.y}, sensorData.nearby_target_positions))
     pucksInGoal = list(filter(lambda p: puckReachedGoal(p, puckGroup), puckPositions))
-    puckObstacles = list(map(lambda p: Point(p["x"], p["y"]).buffer(puckRadius), pucksInGoal))
+    puckObstacles = list(map(lambda p: getObstaclePolygon(p, puckRadius), pucksInGoal))
     obstacles = envStaticObstacles + puckObstacles
 
     return obstacles

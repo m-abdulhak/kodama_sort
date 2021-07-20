@@ -36,13 +36,14 @@ def get_voronoi_cells(points, environment, pose, splittingPoints, buffered=False
         if(poly.is_empty):
             continue
 
-        if(first and splittingPoints and len(splittingPoints) == 2):
-            line = LineString(list(map(lambda p: Point(p["x"], p["y"]), splittingPoints)))
-            splitCells = split(poly, line)
-            curPos = Point(pose.x, pose.y)
-            correctCells = filter(lambda poly: curPos.within(poly), splitCells)
-            if(len(correctCells) >= 1):
-                poly = correctCells[0]
+        # if(first and splittingPoints and len(splittingPoints) == 2):
+        #     line = LineString(list(map(lambda p: Point(p["x"], p["y"]), splittingPoints)))
+        #     splitCells = split(poly, line)
+        #     curPos = Point(pose.x, pose.y)
+        #     correctCells = filter(lambda poly: curPos.within(poly), splitCells)
+        #     if(len(correctCells) >= 1):
+        #         print("********* VC SPLIT ******", poly.wkt, "-->", correctCells[0].wkt)
+        #         poly = correctCells[0]
 
         # Add To Voronoi Cells List
         if(not buffered):
@@ -51,7 +52,8 @@ def get_voronoi_cells(points, environment, pose, splittingPoints, buffered=False
             cells.append(get_buffered_voronoi_cell(points[index], poly, offset))
     
     # exit()
-
+    print("====== New BVC =========", cells[0])
+    # exit()
     return cells
 
 def voronoi_finite_polygons_2d(vor, radius=None):

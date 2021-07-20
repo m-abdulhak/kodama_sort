@@ -127,7 +127,10 @@ def translatePointInDirection(x1, y1, xVec, yVec):
 
 def directionOfPerpendicularBisector(x1, y1, x2, y2, scale):
     length = distanceBetween2Points({"x": x1, "y": y1},{"x": x2, "y": y2})
-    return {"x": scale*(y1-y2)/length, "y": scale*(x2-x1)/length}
+    if (length > 0):
+        return {"x": scale*(y1-y2)/length, "y": scale*(x2-x1)/length}
+    else:
+        return {"x": scale*(y1-y2), "y": scale*(x2-x1)}
 
 def shiftPointOfLineSegInDirOfPerpendicularBisector(x, y, x1, y1, x2, y2, scale):
     dir = directionOfPerpendicularBisector(x1, y1, x2, y2, scale)
@@ -171,7 +174,7 @@ def xyPoint(p):
 
 # New for Pucks
 def radToDeg(radians):
-  return radians * (180 / pi)
+    return radians * (180 / pi)
 
 # /*
 # * Calculates the angle ABC (in radians)
@@ -181,11 +184,14 @@ def radToDeg(radians):
 # * B center point
 # */
 def angleBetweenThreePointsRad(A, B, C):
-  AB = sqrt((B["x"] - A["x"]) ** 2 + (B["y"] - A["y"]) ** 2)
-  BC = sqrt((B["x"] - C["x"]) ** 2 + (B["y"] - C["y"]) ** 2)
-  AC = sqrt((C["x"] - A["x"]) ** 2 + (C["y"] - A["y"]) ** 2)
+    AB = sqrt((B["x"] - A["x"]) ** 2 + (B["y"] - A["y"]) ** 2)
+    BC = sqrt((B["x"] - C["x"]) ** 2 + (B["y"] - C["y"]) ** 2)
+    AC = sqrt((C["x"] - A["x"]) ** 2 + (C["y"] - A["y"]) ** 2)
 
-  return acos((BC * BC + AB * AB - AC * AC) / (2 * BC * AB))
+    if ((2 * BC * AB) != 0):
+        return acos((BC * BC + AB * AB - AC * AC) / (2 * BC * AB))
+    else:
+        return 0
 
 def angleBetweenThreePointsDeg(A, B, C):
   angleRad = angleBetweenThreePointsRad(A, B, C)

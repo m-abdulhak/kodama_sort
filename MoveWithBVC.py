@@ -82,7 +82,7 @@ class MoveTowardsPointController(ThreePiController):
     def getMotorSpeeds(self, forwardSpeed, angularSpeed):
         v_right = forwardSpeed - angularSpeed / 2
         v_left = forwardSpeed + angularSpeed / 2
-        print("=========================>", v_left,v_right)
+        print("Wheels Speeds (L-R):", v_left,v_right)
 
         if forwardSpeed == 0 and angularSpeed != 0:
             if(v_right > 0 ):
@@ -146,7 +146,8 @@ class MoveTowardsPointController(ThreePiController):
         print('fwd',forwardSpeed, 'ang', angularSpeed, 'r', v_right, 'l', v_left) 
 
         self.three_pi.send_speeds(v_left, v_right)
-
+        print("Sent Wheel Speeds")
+        
         return False
 
     def logState(self, sensorData, bvcCell):
