@@ -204,9 +204,9 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
     goalDistanceToStaticObstacles = list(map(lambda obs: Point(newGoal["x"], newGoal["y"]).distance(obs), controller.staticObstacles))
     goalInsideObs = list(filter(lambda dist: dist < robotRadius, goalDistanceToStaticObstacles))
     while (len(goalInsideObs) > 0):
-      print("Goal inside static obs, moving goal further!", newGoal)
+      log("Goal inside static obs, moving goal further!", newGoal)
       newGoal = {"x": 2 * newGoal["x"] - robotPosition["x"], "y": 2 * newGoal["y"] - robotPosition["y"]}
-      print("New goal:", newGoal)
+      log("New goal:", newGoal)
       goalDistanceToStaticObstacles = list(map(lambda obs: Point(newGoal["x"], newGoal["y"]).distance(obs), controller.staticObstacles))
       goalInsideObs = list(filter(lambda dist: dist < robotRadius, goalDistanceToStaticObstacles))
   

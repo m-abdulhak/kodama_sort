@@ -31,7 +31,7 @@ def get_voronoi_cells(points, environment, pose, splittingPoints, buffered=False
         # Clip Voroni Cells To Environment
         poly = poly.intersection(environment)
 
-        # print("Voronoi Cell: ", poly.wkt)
+        # log("Voronoi Cell: ", poly.wkt)
         
         if(poly.is_empty):
             continue
@@ -43,7 +43,7 @@ def get_voronoi_cells(points, environment, pose, splittingPoints, buffered=False
             curPos = Point(pose.x, pose.y)
             correctCells = filter(lambda poly: curPos.within(poly), splitCells)
             if(len(correctCells) >= 1):
-                print("********* VC SPLIT ******", poly.wkt, "-->", correctCells[0].wkt)
+                log("********* VC SPLIT ******", poly.wkt, "-->", correctCells[0].wkt)
                 poly = correctCells[0]
 
         # Add To Voronoi Cells List
@@ -53,7 +53,7 @@ def get_voronoi_cells(points, environment, pose, splittingPoints, buffered=False
             cells.append(get_buffered_voronoi_cell(points[index], poly, offset))
     
     # exit()
-    print("====== New BVC =========", cells[0])
+    log("====== New BVC =========", cells[0])
     # exit()
     return cells
 
@@ -152,16 +152,16 @@ def get_buffered_voronoi_cell(point, poly, offset):
 
         new_coordinates_scaled = pyclipper.scale_from_clipper(new_coordinates)
         
-        # print(new_coordinates_scaled)
+        # log(new_coordinates_scaled)
 
         new_coordinates_scaled[0].append(new_coordinates_scaled[0][0])
 
         return new_coordinates_scaled[0]
         
     except Exception as e:
-        # print("Error Calculating BVC!")
-        # print(traceback.format_exc())
-        # print("----------------------")
+        # log("Error Calculating BVC!")
+        # log(traceback.format_exc())
+        # log("----------------------")
         return [[point, point],[point, point],[point, point]]
 
 def plot_polygons_points(cells, points):
@@ -178,3 +178,11 @@ def plot_polygons_points(cells, points):
 
     plt.savefig('voro.png')
     plt.show()
+
+
+logging = False
+# logging = True
+
+def log(*msg):
+    if(logging):
+        print(msg)

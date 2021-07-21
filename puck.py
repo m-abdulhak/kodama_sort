@@ -6,11 +6,11 @@ from utils.geometry import *
 puckGroups = [
   {
     "goal": {"x": 310, "y": 250},
-    "radius": 100
+    "radius": 70
   },
   {
     "goal": {"x": 400, "y": 400},
-    "radius": 100
+    "radius": 70
   }
 ]
 
@@ -23,7 +23,7 @@ def puckReachedGoal(puckPosition, group):
   goal = puckGroups[group]["goal"]
   radius = puckGroups[group]["radius"]
   distanceToGoal = distanceBetween2Points(puckPosition, goal)
-  print("Puck Reached Goal?", \
+  log("Puck Reached Goal?", \
     "puck", puckPosition, \
     "goal", goal, \
     "radius", radius, \
@@ -50,3 +50,10 @@ def getPuckManeuverGoal(robotPosition, puckPosition, group):
       puckPosition["y"], \
       goal["x"], \
       goal["y"])
+
+logging = False
+# logging = True
+
+def log(*msg):
+    if(logging):
+        print(msg)
