@@ -16,6 +16,7 @@ from shapely.geometry import Polygon
 from shapely.ops import nearest_points
 from voronoi.voronoi import get_voronoi_cells
 from utils.geometry import shiftPointOfLineSegInDirOfPerpendicularBisector
+from utils.geometry import getClosesetPointOfStaticObstacles
 
 from puck import *
 
@@ -36,17 +37,18 @@ def client_loop(config, controller):
 
     # Pass environment definition to controller
     controller.setEnv(envPoly)
+    controller.setStaticObstacles(envStaticObstacles)
 
     # Wait for connection to CVSS
     waitForconnectionToCVSS(config, config.tagID)
-    print("Connection To CVSS Established!")
+    log("Connection To CVSS Established!")
     time.sleep(2)
 
     # If a goal tag is specified in config, retrieve its CURRENT position and set it as goal 
     configGoalTag = None
     # Not beeded now since goal tags will no nolger be used to specify a goal
     # controller.setGoal(configGoal.x, configGoal.y)
-    print("GOAL SET AS:", controller.goal)
+    log("GOAL SET AS:", controller.goal)
 
     # Initialize Time
     last_timestamp = -1
@@ -70,6 +72,7 @@ def client_loop(config, controller):
 
             # Get closest point to static obstacles
             closestPointToStaticObs = getClosesetPointOfStaticObstacles(sensorData, staticObstacles)
+            controller.setClosestPointToStaticObstacles(closestPointToStaticObs)
 
             # Get another point on the splitting line be shifting the closest point 
             # in direction of Perpendicular Bisector of curPosition---closestPoint line segment
@@ -91,12 +94,12 @@ def client_loop(config, controller):
                 sensorData.pose.y, \
                 1000)
 
-            print("Split Points:", closestPointToStaticObs.wkt, point2, point1)
+            log("Split Points:", closestPointToStaticObs.wkt, point2, point1)
             
             # Calculate Voronoi Diagram
             bvcCells = get_voronoi_cells(voronoiPoints, envPoly, sensorData.pose, [point1, point2], buffered=True, offset=robotRadius)
 
-            # print(voronoiPoints, bvcCells)
+            # log(voronoiPoints, bvcCells)
 
             # Extract this robot cell from voronoi cells
             bvcCell = bvcCells[0]
@@ -105,7 +108,7 @@ def client_loop(config, controller):
                 print 'Goal Reached'
                 # return
             
-            print("Controller Update Done! Cycle Time:", time.time() - last_update)
+            log("Controller Update Done! Cycle Time:", time.time() - last_update)
             last_timestamp = msg_timestamp
             last_update = time.time()
 
@@ -115,10 +118,10 @@ def waitForconnectionToCVSS(config, tagId):
         response = getSensorData(config, tagId)
         
         if response and response.pose:
-            # print("Returning!")
+            # log("Returning!")
             return
         else:
-            print("Could Not Connec To CVSS, Retrying!")
+            log("Could Not Connec To CVSS, Retrying!")
             response = None
         
         time.sleep(1)
@@ -128,7 +131,7 @@ def getSensorData(config, tagID):
     port = config.port
 
     # Ping host machine running CVSensorSimulator, request sensor data for this robot.
-    print("Pinging host")
+    log("Pinging host")
     requestData = cvss_msg_pb2.RequestData()
     requestData.tag_id = tagID
     # requestData.request_waypoints = False
@@ -137,26 +140,26 @@ def getSensorData(config, tagID):
 
     try:
         # Connect To Server
-        print("Trying to connect to server!")
+        log("Trying to connect to server!")
         sensorSimulator.connect((server_ip, port))
 
         # Send request for sensor data
-        print("Sending request for sensor data!")
+        log("Sending request for sensor data!")
         sensorSimulator.send(requestData.SerializeToString())
         sensorData = cvss_msg_pb2.SensorData()
         msg = sensorSimulator.recv(128)
         
         # Close Connection
-        print("Closing Connection!")
+        log("Closing Connection!")
         sensorSimulator.close()
 
         # Parse Message
-        print("Parsing Message!")
+        log("Parsing Message!")
         sensorData.ParseFromString(msg)
         
-        # print("+++++++++++++++++++++++++++++++++++++++++++++++++")
-        # print("sensorData", sensorData)
-        # print("+++++++++++++++++++++++++++++++++++++++++++++++++")
+        # log("+++++++++++++++++++++++++++++++++++++++++++++++++")
+        # log("sensorData", sensorData)
+        # log("+++++++++++++++++++++++++++++++++++++++++++++++++")
 
         return sensorData
         
@@ -173,7 +176,7 @@ def extractVoronoiPoints(sensorData, defaultVoronoiPoints):
     for neighbor in sensorData.nearby_robot_poses:
         neighbors.append(neighbor)
 
-    print("NEIGHBORS:", neighbors)
+    log("NEIGHBORS:", neighbors)
 
     # Get number of Voronoi Points (neighbors + 1, at least 4)  
     neighborsCount = len(neighbors)
@@ -192,7 +195,7 @@ def extractVoronoiPoints(sensorData, defaultVoronoiPoints):
     for indx, n in enumerate(neighbors):
         points[indx + 1] = [n.x, n.y]
     
-    print("VORONOI POINTS:", points)
+    log("VORONOI POINTS:", points)
 
     return points
 
@@ -238,14 +241,9 @@ def getStaticObstacles(sensorData, envStaticObstacles, puckRadius):
 
     return obstacles
 
-def getClosesetPointOfStaticObstacles(sensorData, staticObstacles):
-    curPosition = Point(sensorData.pose.x, sensorData.pose.y)
-    closestPoints = list(map(lambda obs: nearest_points(obs, curPosition)[0], staticObstacles))
-    closestPoint = reduce(lambda a, b: b if (a == None or curPosition.distance(b) < curPosition.distance(a)) else a, closestPoints, None)
-    
-    # print(staticObstacles)
-    # print(map(lambda p: p.wkt, closestPoints))
-    # print(closestPoint)
-    # exit()
+logging = False
+# logging = True
 
-    return closestPoint
+def log(*msg):
+    if(logging):
+        print(msg)

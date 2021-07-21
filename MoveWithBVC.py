@@ -34,43 +34,49 @@ class MoveTowardsPointController(ThreePiController):
         self.logFileLocation = 'logs/log-{}-{}.txt'.format(str(self.bvcNav.deadLockRecoveryAlgorithm), now)
         try:
             self.logFile = open(self.logFileLocation, 'w+')
-            print("Loggin to : {}".format(self.logFileLocation))
+            log("Loggin to : {}".format(self.logFileLocation))
         except Exception as e:
-            print("Error! Cannot Open Log File!", e)
+            log("Error! Cannot Open Log File!", e)
         
     def setGoal(self, x, y):
-        print("Setting Goal To:", x, y)
+        log("Setting Goal To:", x, y)
         self.goal = {"x": x, "y": y}
         self.bvcNav.setGoal(x, y)  
 
     def setEnv(self, poly):
         self.env = poly
-        print("Environment Boundary:", self.env.wkt)
+        log("Environment Boundary:", self.env.wkt)
+
+    def setStaticObstacles(self, polys):
+        self.staticObstacles = polys
+
+    def setClosestPointToStaticObstacles(self, point):
+        self.closestPointToStaticObstacles = point
 
     def getFowrardAndAngularSpeeds(self, distanceToGoal, angleToGoal):
         forwardSpeed, angularSpeed = 0, 0
 
-        # print("Distance:", distanceToGoal, "Angle:", angleToGoal)
+        # log("Distance:", distanceToGoal, "Angle:", angleToGoal)
         
         # If goal is not reached
         if (not self.bvcNav.reached(self.goal)):
 
             # If angle to goal is small enough => move in a straight line
             if (abs(angleToGoal) < self.maxAngleToMoveStraightToGoal):
-                # print("Moving Forward")
+                # log("Moving Forward")
                 forwardSpeed = min(distanceToGoal/100, self.maxForwardSpeed) 
             # Else, turn in place => No Forward Speed
             else:
-                # print("Not Moving Forward")
+                # log("Not Moving Forward")
                 forwardSpeed = 0
 
             # If robot is not facing goal, turn to goal
             if (abs(angleToGoal) > self.robotIsFacingGoalMaxAngle):
-                # print("Turning")
+                # log("Turning")
                 angularSpeed = min(angleToGoal / pi, self.maxAngularSpeed)
             # Else do not turn (move in straight line)
             else:
-                # print("Not Turning")
+                # log("Not Turning")
                 angularSpeed = 0
                 
         else:
@@ -82,7 +88,7 @@ class MoveTowardsPointController(ThreePiController):
     def getMotorSpeeds(self, forwardSpeed, angularSpeed):
         v_right = forwardSpeed - angularSpeed / 2
         v_left = forwardSpeed + angularSpeed / 2
-        print("Wheels Speeds (L-R):", v_left,v_right)
+        log("Wheels Speeds (L-R):", v_left,v_right)
 
         if forwardSpeed == 0 and angularSpeed != 0:
             if(v_right > 0 ):
@@ -105,18 +111,18 @@ class MoveTowardsPointController(ThreePiController):
         x = sensor_data.pose.x
         y = sensor_data.pose.y
         theta = sensor_data.pose.yaw
-        # print("Pos:", (x, y, theta))
-        # print(self.goal)
+        # log("Pos:", (x, y, theta))
+        # log(self.goal)
 
-        self.logState(sensor_data, bvcCell)
+        self.logStateToFile(sensor_data, bvcCell)
 
         self.bvcNav.update({"x": x, "y": y}, bvcCell, sensor_data)
-        print("Cur Position:", self.bvcNav.position)
+        log("Cur Position:", self.bvcNav.position)
 
         # Get new goal
-        print("*** Calculating New Goal ***")
+        log("*** Calculating New Goal ***")
         newGoal = updateGoal(self, {"x": x, "y": y}, bvcCell, sensor_data, self.env)
-        print("*** New Goal ***", newGoal)
+        log("*** New Goal ***", newGoal)
         self.setGoal(newGoal["x"], newGoal["y"])
 
         # Check if final goal reached 
@@ -127,7 +133,7 @@ class MoveTowardsPointController(ThreePiController):
         # Get the intermediate goal within BVC Cell
         temp_goal = self.bvcNav.setTempGoalInCell()
 
-        # print("Goal:", self.goal, "tempGoal:", temp_goal)
+        # log("Goal:", self.goal, "tempGoal:", temp_goal)
 
         # Compute the relative position of the goal in polar coordinates (distanceToGoal, angleToGoal)
         dx = temp_goal["x"] - x
@@ -143,19 +149,19 @@ class MoveTowardsPointController(ThreePiController):
         v_left, v_right = self.getMotorSpeeds(forwardSpeed, angularSpeed)
         v_left, v_right = v_left, v_right 
 
-        print('fwd',forwardSpeed, 'ang', angularSpeed, 'r', v_right, 'l', v_left) 
+        log('fwd',forwardSpeed, 'ang', angularSpeed, 'r', v_right, 'l', v_left) 
 
         self.three_pi.send_speeds(v_left, v_right)
-        print("Sent Wheel Speeds")
+        log("Sent Wheel Speeds")
         
         return False
 
-    def logState(self, sensorData, bvcCell):
+    def logStateToFile(self, sensorData, bvcCell):
         try:
             if self.logFile and self.logFile.closed:
                 self.logFile = open(self.logFileLocation, 'w+')
                 
-            self.logFile.write(self.getLogStateRow(sensorData, bvcCell))
+            self.logFile.write(self.getLogStateToFileRow(sensorData, bvcCell))
             
             self.logSize = self.logSize+1
             if self.logSize > 1000:
@@ -163,12 +169,20 @@ class MoveTowardsPointController(ThreePiController):
                 self.logSize = 0
                 
         except Exception as e:
-            print("Error! Write to Log File!", e)
+            log("Error! Write to Log File!", e)
     
-    def getLogStateRow(self, sensorData, bvcCell):
+    def getLogStateToFileRow(self, sensorData, bvcCell):
         now = time.time()
         return str(now) + " , " + str(sensorData).replace("\n", "") + " , " + str(bvcCell) + " , " + str(self.goal) + "\n"
 
+
+logging = False
+# logging = True
+
+def log(*msg):
+    if(logging):
+        print(msg)
+
 # Env: Min: 40, 40 Max: 610, 440 
-print("Starting")
+log("Starting")
 execute_with_three_pi(MoveTowardsPointController(150, 190))

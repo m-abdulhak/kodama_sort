@@ -441,12 +441,9 @@ class BvcNavigator:
         ret =  distanceBetween2Points(self.position, point)
         return ret
 
-logging = True
+logging = False
+# logging = True
 
 def log(*msg):
     if(logging):
         print(msg)
-
-# print(closestPointInLineSegToPoint(0, 0, 0, 1, 1, 0))
-# bvcNav = BvcNavigator(0,0)
-# print(bvcNav.findPointInCellClosestToGoal([[0,1],[1,1],[1,0]]))

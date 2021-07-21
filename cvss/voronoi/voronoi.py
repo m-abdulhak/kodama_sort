@@ -36,14 +36,15 @@ def get_voronoi_cells(points, environment, pose, splittingPoints, buffered=False
         if(poly.is_empty):
             continue
 
-        # if(first and splittingPoints and len(splittingPoints) == 2):
-        #     line = LineString(list(map(lambda p: Point(p["x"], p["y"]), splittingPoints)))
-        #     splitCells = split(poly, line)
-        #     curPos = Point(pose.x, pose.y)
-        #     correctCells = filter(lambda poly: curPos.within(poly), splitCells)
-        #     if(len(correctCells) >= 1):
-        #         print("********* VC SPLIT ******", poly.wkt, "-->", correctCells[0].wkt)
-        #         poly = correctCells[0]
+        # Split BVC with closest point from static obstacles
+        if(first and splittingPoints and len(splittingPoints) == 2):
+            line = LineString(list(map(lambda p: Point(p["x"], p["y"]), splittingPoints)))
+            splitCells = split(poly, line)
+            curPos = Point(pose.x, pose.y)
+            correctCells = filter(lambda poly: curPos.within(poly), splitCells)
+            if(len(correctCells) >= 1):
+                print("********* VC SPLIT ******", poly.wkt, "-->", correctCells[0].wkt)
+                poly = correctCells[0]
 
         # Add To Voronoi Cells List
         if(not buffered):

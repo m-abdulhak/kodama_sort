@@ -2,6 +2,7 @@ from __future__ import division
 from math import *
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
+from shapely.ops import nearest_points
 import datetime
 
 # **************************************************
@@ -196,3 +197,16 @@ def angleBetweenThreePointsRad(A, B, C):
 def angleBetweenThreePointsDeg(A, B, C):
   angleRad = angleBetweenThreePointsRad(A, B, C)
   return radToDeg(angleRad)
+
+
+def getClosesetPointOfStaticObstacles(sensorData, staticObstacles):
+    curPosition = Point(sensorData.pose.x, sensorData.pose.y)
+    closestPoints = list(map(lambda obs: nearest_points(obs, curPosition)[0], staticObstacles))
+    closestPoint = reduce(lambda a, b: b if (a == None or curPosition.distance(b) < curPosition.distance(a)) else a, closestPoints, None)
+    
+    # log(staticObstacles)
+    # log(map(lambda p: p.wkt, closestPoints))
+    # log(closestPoint)
+    # exit()
+
+    return closestPoint
