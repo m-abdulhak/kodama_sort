@@ -79,10 +79,14 @@ def cellContains(cell, point):
     return  len(cell) > 2 and pointIsInsidePolygon(point, cell)
 
 def pointIsInsidePolygon(point, polygon):
-    point = Point(point["x"], point["y"])
-    poly = Polygon(polygon)
-    # return poly.contains(point)
-    return point.distance(poly) < 1
+    try:
+        point = Point(point["x"], point["y"])
+        poly = Polygon(polygon)
+        # return poly.contains(point)
+        return point.distance(poly) < 1
+    except Exception as e:
+        return False
+    
 
 def circleArea(radius):
     return radius * radius * pi
