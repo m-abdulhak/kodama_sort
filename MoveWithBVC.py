@@ -126,9 +126,9 @@ class MoveTowardsPointController(ThreePiController):
         self.setGoal(newGoal["x"], newGoal["y"])
 
         # Check if final goal reached 
-        if (self.bvcNav.reached(self.goal)):
+        # if (self.bvcNav.reached(self.goal)):
             # print "reached goal!"
-            return True
+            # return True
 
         # Get the intermediate goal within BVC Cell
         temp_goal = self.bvcNav.setTempGoalInCell()
@@ -176,7 +176,7 @@ class MoveTowardsPointController(ThreePiController):
         return str(now) + " , " + str(sensorData).replace("\n", "") + " , " + str(bvcCell) + " , " + str(self.goal) + "\n"
 
 
-logging = False
+logging = True
 # logging = True
 
 def log(*msg):

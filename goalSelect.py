@@ -149,6 +149,7 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
       not controller.bvcNav.reached(controller.goal)):
       curGoalTimeSteps += 1
       # return robot.bestPuck
+      log("LOCAL GOAL STILL VALID, Not Selecting a new puck!")
       return None
 
     angleRatings = []
@@ -164,9 +165,11 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
       return False
 
     validPucks = list(filter(lambda p: puckIsValid(p, 0), puckPositions))
+    log("Valid Pucks:", validPucks)
 
     for puck in validPucks:
       ang = puckNormalizedAngle(robotPosition, puck, 0)
+      log("Angle to local goal:", puck, ang)
       if(puckDistanceTo(puck, robotPosition) < PUCK_DETECTION_RADIUS):
         if(ang < ACCEPTABLE_PUCK_ANGLE_THRESH):
           angleRatings.append([puck, ang])
@@ -215,6 +218,7 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
   log("Available Pucks:", puckPositions)
   bestPuck = selectBestNearbyPuck()
   log("bestPuck:",bestPuck)
+  # exit()
   if (bestPuck == None):
     goal = getRandGoal()
     goal = limitGoalWithinEnvOutsideStaicObstacles(goal)
@@ -224,7 +228,7 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
     goal = limitGoalWithinEnvOutsideStaicObstacles(goal)
     return goal
 
-logging = False
+logging = True
 # logging = True
 
 def log(*msg):
