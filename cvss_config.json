@@ -5,8 +5,12 @@
     ],
     "robotRadius": 35.0,
     "puckRadius": 25.0,
+    "puckGroups": [
+        { "goal": [310, 250], "radius": 80},
+        { "goal": [400, 400], "radius": 80}
+    ],
     "serverIP": "192.168.2.76",
     "port": 8078,
-    "tagID": 3,
-    "label": "kodama3"
+    "tagID": 11,
+    "label": "kodama11"
 }

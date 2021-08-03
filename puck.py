@@ -3,29 +3,26 @@ import os
 import math
 from utils.geometry import *
 import pickle
+import json
 
 MAP_SCALE = 0.25
 
-map_files = ['map_pickles/0_goal_map.pickle']
-maps = []
+def loadPuckGroups(file):
+  groups = []
+  with open(file, 'rb') as jsonFile:
+    loaded_configs = json.load(jsonFile)
+    for g in loaded_configs["puckGroups"]:
+      groups.append({
+        "goal": {"x": g["goal"][0], "y": g["goal"][1]},
+        "radius" : g["radius"]
+      })
+    return groups
 
-for map_file in map_files: 
-  with open(map_file, 'rb') as handle:
-      loaded_goal_map = pickle.load(handle)
-      maps.append(loaded_goal_map)
-      # print(loaded_goal_map[0][0])
-      # exit()
-
-puckGroups = [
-  {
-    "goal": {"x": 310, "y": 250},
-    "radius": 80
-  },
-  {
-    "goal": {"x": 400, "y": 400},
-    "radius": 80
-  }
-]
+def loadMaps(files):
+  for map_file in files: 
+    with open(map_file, 'rb') as handle:
+        loaded_goal_map = pickle.load(handle)
+        maps.append(loaded_goal_map)
 
 def getPuckGoal(puckPosition, group):
   x = int(puckPosition["x"] * MAP_SCALE)
@@ -76,3 +73,10 @@ logging = True
 def log(*msg):
     if(logging):
         print(msg)
+
+map_files = ['map_pickles/0_goal_map.pickle']
+maps = []
+loadMaps(map_files)
+
+config_file = "cvss_config.json"
+puckGroups = loadPuckGroups(config_file)
