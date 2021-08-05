@@ -74,7 +74,7 @@ for indx, raw_goal in enumerate(goals):
     ##########  PICKLES  ##########
     ###############################
     
-    file_name = 'pickles/' + str(indx) + '_goal_map.pickle'
+    file_name = 'map_pickles/' + str(indx) + '_goal_map.pickle'
     
     with open(file_name, 'wb') as handle:
         print('Dumping goal map to: ' + file_name)
