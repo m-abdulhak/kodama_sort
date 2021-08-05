@@ -15,7 +15,7 @@ def readConfig(filePath):
     f.close()
     return data
 
-config = readConfig('config.json')
+config = readConfig('cvss_config.json')
 env = config["env"]
 obs = config["staticObstacles"]
 goals = config["goals"]
