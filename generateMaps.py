@@ -1,3 +1,4 @@
+import os
 import json
 import numpy as np
 import pylab as plt
@@ -18,7 +19,7 @@ def readConfig(filePath):
 config = readConfig('cvss_config.json')
 env = config["env"]
 obs = config["staticObstacles"]
-goals = config["goals"]
+goals = list(map(lambda g: g["goal"], config["puckGroups"])) 
 
 envXMax = int(max([x[0] for x in env]) * MAP_SCALE) 
 envYMax = int(max([x[1] for x in env]) * MAP_SCALE)
@@ -89,6 +90,9 @@ for indx, raw_goal in enumerate(goals):
     ###############################
     
     if (SAVE_FIGURES or SHOW_FIGURES):
+        if not os.path.isdir('images'):
+            os.mkdir('images')
+
         plt.title('Goal Location')
         plt.contour(X, Y, map_goal_mask, [0], linewidths=(3), colors='red')
         if (SAVE_FIGURES):
