@@ -26,10 +26,10 @@ def readConfig(filePath):
 ####        Load Configurations        ####
 ###########################################
 
-config = readConfig('config.json')
+config = readConfig('cvss_config.json')
 env = config["env"]
 obs = config["staticObstacles"]
-goals = config["goals"]
+goals = list(map(lambda g: g["goal"], config["puckGroups"]))
 
 envPoly = Polygon([p[0] * MAP_SCALE, p[1] * MAP_SCALE] for p in env)
 envXMax = int(max([x[0] for x in env]) * MAP_SCALE) 
@@ -51,7 +51,9 @@ for indx, raw_goal in enumerate(goals):
     speed = 1*np.ones_like(X)
 
     map_goal_mask[np.logical_and(X==goal[0], Y==goal[1])] = 1
-
+    speed[np.logical_or(X>=envXMax, Y>=envYMax)] = 0
+    speed[np.logical_or(X==0, Y==0)] = 0
+    
     for x in range(0, envXMax):
         for y in range(0, envYMax):
             curPoint = Point(x,y)
@@ -63,6 +65,11 @@ for indx, raw_goal in enumerate(goals):
     
     t.fill_value = np.NaN
     t_filled = t.filled()
+    
+    t_filled[X==0] = t_filled[X==1] + 1
+    t_filled[Y==0] = t_filled[Y==1] + 1
+    t_filled[X==envXMax] = t_filled[X==envXMax-1] + 1
+    t_filled[Y==envYMax] = t_filled[Y==envYMax-1] + 1
     
     yG, xG = np.gradient(t_filled)
     x_directions = -10 * xG
@@ -82,7 +89,7 @@ for indx, raw_goal in enumerate(goals):
     ##########  PICKLES  ##########
     ###############################
     
-    file_name = 'pickles/' + str(indx) + '_goal_map.pickle'
+    file_name = 'map_pickles/' + str(indx) + '_goal_map.pickle'
     
     with open(file_name, 'wb') as handle:
         print('Dumping goal map to: ' + file_name)

@@ -31,7 +31,7 @@ print("Robot Radius:", ROBOT_RADIUS,"Map Scale:", MAP_SCALE, "Clearance:", CLEAR
 ####        Load Configurations        ####
 ###########################################
 
-config = readConfig('config.json')
+config = readConfig('cvss_config.json')
 env = config["env"]
 obs = config["staticObstacles"]
 
@@ -78,15 +78,15 @@ y_directions = -1 * yG
 ###########################################
 ####    Generate Environment Orbits    ####
 ###########################################
-x_directions_shifted = ENV_ORBIT_STEEPNESS * y_directions + x_directions
-y_directions_shifted = ENV_ORBIT_STEEPNESS * -1 * x_directions + y_directions
+x_directions_shifted = ENV_ORBIT_STEEPNESS * -1 *  y_directions + x_directions
+y_directions_shifted = ENV_ORBIT_STEEPNESS * x_directions + y_directions
 
 for x in range(0, envXMax):
     for y in range(0, envYMax):
         curPoint = Point(x,y)
-        if(map_border_mask[y][x] == -1):
-            x_directions_shifted[y][x] = ENV_ORBIT_STEEPNESS * -1 * y_directions[y][x] + x_directions[y][x]
-            y_directions_shifted[y][x] = ENV_ORBIT_STEEPNESS * x_directions[y][x] + y_directions[y][x]
+        if(map_border_mask[y][x] != -1):
+            x_directions_shifted[y][x] = ENV_ORBIT_STEEPNESS * y_directions[y][x] + x_directions[y][x]
+            y_directions_shifted[y][x] = ENV_ORBIT_STEEPNESS * -1 * x_directions[y][x] + y_directions[y][x]
 
 x_goals = x_directions + X
 y_goals = y_directions + Y
@@ -102,7 +102,7 @@ for y, row in enumerate(x_goals):
 ##########  PICKLES  ##########
 ###############################
 
-file_name = 'pickles/env_orbit_map.pickle'
+file_name = 'map_pickles/env_orbit_map.pickle'
 
 with open(file_name, 'wb') as handle:
     print('Dumping map to: ' + file_name)
