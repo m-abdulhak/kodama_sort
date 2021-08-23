@@ -19,10 +19,12 @@ def loadPuckGroups(file):
     return groups
 
 def loadMaps(files):
+  m = []
   for map_file in files: 
     with open(map_file, 'rb') as handle:
         loaded_goal_map = pickle.load(handle)
-        maps.append(loaded_goal_map)
+        m.append(loaded_goal_map)
+  return m
 
 def getPuckGoal(puckPosition, group):
   x = int(puckPosition["x"] * MAP_SCALE)
@@ -75,8 +77,8 @@ def log(*msg):
         print(msg)
 
 map_files = ['map_pickles/0_goal_map.pickle']
-maps = []
-loadMaps(map_files)
+maps = loadMaps(map_files)
+
 
 config_file = "cvss_config.json"
 puckGroups = loadPuckGroups(config_file)
