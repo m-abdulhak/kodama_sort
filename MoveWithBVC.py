@@ -64,7 +64,7 @@ class MoveTowardsPointController(ThreePiController):
             # If angle to goal is small enough => move in a straight line
             if (abs(angleToGoal) < self.maxAngleToMoveStraightToGoal):
                 # log("Moving Forward")
-                forwardSpeed = min(distanceToGoal/100, self.maxForwardSpeed) 
+                forwardSpeed = min(distanceToGoal/10, self.maxForwardSpeed) 
             # Else, turn in place => No Forward Speed
             else:
                 # log("Not Moving Forward")

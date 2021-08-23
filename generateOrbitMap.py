@@ -3,6 +3,7 @@ import numpy as np
 import pylab as plt
 import skfmm
 import pickle
+from math import sqrt
 from shapely.geometry import Point, Polygon
 
 def pointIsInsidePolygon(point, poly):
@@ -17,6 +18,7 @@ def readConfig(filePath):
     f.close()
     return data
 
+MIN_DIRECTION = 30
 ENV_ORBIT_STEEPNESS = 2
 INCLUDE_OBSTACLES = True
 SAVE_FIGURES = True
@@ -72,8 +74,8 @@ t = skfmm.travel_time(map_border_mask, speed, 1)
 t_filled = t
 
 yG, xG = np.gradient(t_filled)
-x_directions = -1 * xG
-y_directions = -1 * yG
+x_directions = -10 * xG
+y_directions = -10 * yG
 
 ###########################################
 ####    Generate Environment Orbits    ####
@@ -81,21 +83,72 @@ y_directions = -1 * yG
 x_directions_shifted = ENV_ORBIT_STEEPNESS * -1 *  y_directions + x_directions
 y_directions_shifted = ENV_ORBIT_STEEPNESS * x_directions + y_directions
 
+def vecLength(x, y):
+    return sqrt(x*x + y*y)
+
 for x in range(0, envXMax):
     for y in range(0, envYMax):
         curPoint = Point(x,y)
-        if(map_border_mask[y][x] != -1):
+        if (map_border_mask[y][x] != -1):
             x_directions_shifted[y][x] = ENV_ORBIT_STEEPNESS * y_directions[y][x] + x_directions[y][x]
             y_directions_shifted[y][x] = ENV_ORBIT_STEEPNESS * -1 * x_directions[y][x] + y_directions[y][x]
 
-x_goals = x_directions * 10 + X
-y_goals = y_directions * 10 + Y
+        if (x_directions_shifted[y][x] >= 0 and x_directions_shifted[y][x] < MIN_DIRECTION):
+            x_directions_shifted[y][x]  = MIN_DIRECTION
+        if (x_directions_shifted[y][x] <= 0 and x_directions_shifted[y][x] > -1 * MIN_DIRECTION):
+            x_directions_shifted[y][x]  = -1 * MIN_DIRECTION
+        if (y_directions_shifted[y][x] >= 0 and y_directions_shifted[y][x] < MIN_DIRECTION):
+            y_directions_shifted[y][x]  = MIN_DIRECTION
+        if (y_directions_shifted[y][x] <= 0 and y_directions_shifted[y][x] > -1 * MIN_DIRECTION):
+            y_directions_shifted[y][x]  = -1 * MIN_DIRECTION
+
+
+from scipy.ndimage.filters import gaussian_filter
+
+x_directions_shifted = gaussian_filter(x_directions_shifted, sigma=2)
+y_directions_shifted = gaussian_filter(y_directions_shifted, sigma=2)
+
+countAll = 0
+sumAll = 0
+minAll = None
+
+for x in range(0, envXMax):
+    for y in range(0, envYMax):
+        curPoint = Point(x,y)        
+        vLength = vecLength(x_directions_shifted[y][x], y_directions_shifted[y][x])
+
+        if (vLength < MIN_DIRECTION / 2 and x_directions_shifted[y][x] >= 0 and x_directions_shifted[y][x] < MIN_DIRECTION):
+            x_directions_shifted[y][x]  = MIN_DIRECTION / 2
+        if (vLength < MIN_DIRECTION / 2 and x_directions_shifted[y][x] <= 0 and x_directions_shifted[y][x] > -1 * MIN_DIRECTION):
+            x_directions_shifted[y][x]  = -1 * MIN_DIRECTION / 2
+        if (vLength < MIN_DIRECTION / 2 and y_directions_shifted[y][x] >= 0 and y_directions_shifted[y][x] < MIN_DIRECTION):
+            y_directions_shifted[y][x]  = MIN_DIRECTION / 2
+        if (vLength < MIN_DIRECTION / 2 and y_directions_shifted[y][x] <= 0 and y_directions_shifted[y][x] > -1 * MIN_DIRECTION):
+            y_directions_shifted[y][x]  = -1 * MIN_DIRECTION / 2
+            
+        vLength = vecLength(x_directions_shifted[y][x], y_directions_shifted[y][x])
+
+        countAll += 1
+        sumAll += vLength
+        if minAll == None or vLength < minAll:
+            minAll = vLength
+
+# x_directions_shifted = gaussian_filter(x_directions_shifted, sigma=1)
+# y_directions_shifted = gaussian_filter(y_directions_shifted, sigma=1)
+
+print("Count", countAll)
+print("Mean", sumAll / countAll)
+print("Min", minAll)
+
+x_goals = x_directions_shifted + X
+y_goals = y_directions_shifted + Y
 
 goal_map = []
 
 for y, row in enumerate(x_goals):
     goal_map.append([])
     for x, val in enumerate(row):
+        # if(x_directions)
         goal_map[y].append([x_goals[y][x], y_goals[y][x]])
 
 ###############################
@@ -117,44 +170,44 @@ with open(file_name, 'wb') as handle:
 ###############################
 
 if (SAVE_FIGURES or SHOW_FIGURES):
-    plt.title('Orbit Border Shape')
-    plt.contour(X, Y, map_border_mask, [0], linewidths=(3), colors='red')
-    if (SAVE_FIGURES):
-        plt.savefig('images/env_orbit_1_border_mask.png', dpi=1200)
-    if (SHOW_FIGURES):
-        plt.show()
+    # plt.title('Orbit Border Shape')
+    # plt.contour(X, Y, map_border_mask, [0], linewidths=(3), colors='red')
+    # if (SAVE_FIGURES):
+    #     plt.savefig('images/env_orbit_1_border_mask.png', dpi=1200)
+    # if (SHOW_FIGURES):
+    #     plt.show()
 
-    plt.title('Static Obstacles (Speed Map)')
-    plt.contour(X, Y, speed, [0], linewidths=(1), colors='Blue')
-    plt.contourf(X, Y, speed, 1)
-    plt.colorbar()
-    if (SAVE_FIGURES):
-        plt.savefig('images/env_orbit_2_speed_map.png', dpi=1200)
-    if (SHOW_FIGURES):
-        plt.show()
+    # plt.title('Static Obstacles (Speed Map)')
+    # plt.contour(X, Y, speed, [0], linewidths=(1), colors='Blue')
+    # plt.contourf(X, Y, speed, 1)
+    # plt.colorbar()
+    # if (SAVE_FIGURES):
+    #     plt.savefig('images/env_orbit_2_speed_map.png', dpi=1200)
+    # if (SHOW_FIGURES):
+    #     plt.show()
 
-    plt.title('Distance To Border')
-    plt.contour(X, Y, map_border_mask,[0], linewidths=(3), colors='red')
-    cp = plt.contourf(X, Y, t, 50)
-    plt.colorbar()
-    if (SAVE_FIGURES):
-        plt.savefig('images/env_orbit_3_distance_to_border.png', dpi=1200)
-    if (SHOW_FIGURES):
-        plt.show()
+    # plt.title('Distance To Border')
+    # plt.contour(X, Y, map_border_mask,[0], linewidths=(3), colors='red')
+    # cp = plt.contourf(X, Y, t, 50)
+    # plt.colorbar()
+    # if (SAVE_FIGURES):
+    #     plt.savefig('images/env_orbit_3_distance_to_border.png', dpi=1200)
+    # if (SHOW_FIGURES):
+    #     plt.show()
 
-    plt.title('Gradient of Distance To Border')
-    cp = plt.quiver(X[::2, ::2], Y[::2, ::2], xG[::2, ::2], yG[::2, ::2])
-    if (SAVE_FIGURES):
-        plt.savefig('images/env_orbit_4_gradients_of_distance_to_border.png', dpi=1200)
-    if (SHOW_FIGURES):
-        plt.show()
+    # plt.title('Gradient of Distance To Border')
+    # cp = plt.quiver(X[::2, ::2], Y[::2, ::2], xG[::2, ::2], yG[::2, ::2])
+    # if (SAVE_FIGURES):
+    #     plt.savefig('images/env_orbit_4_gradients_of_distance_to_border.png', dpi=1200)
+    # if (SHOW_FIGURES):
+    #     plt.show()
 
-    plt.title('Directions To Border')
-    cp = plt.quiver(X[::2, ::2], Y[::2, ::2], x_directions[::2, ::2], y_directions[::2, ::2])
-    if (SAVE_FIGURES):
-        plt.savefig('images/env_orbit_5_direction_to_border.png', dpi=1200)
-    if (SHOW_FIGURES):
-        plt.show()
+    # plt.title('Directions To Border')
+    # cp = plt.quiver(X[::2, ::2], Y[::2, ::2], x_directions[::2, ::2], y_directions[::2, ::2])
+    # if (SAVE_FIGURES):
+    #     plt.savefig('images/env_orbit_5_direction_to_border.png', dpi=1200)
+    # if (SHOW_FIGURES):
+    #     plt.show()
 
     plt.title('Environment Orbit Directions')
     cp = plt.quiver(X[::2, ::2], Y[::2, ::2], x_directions_shifted[::2, ::2], y_directions_shifted[::2, ::2])
