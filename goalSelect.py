@@ -25,7 +25,7 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
   puckPositions = list(map(lambda p: {"x": p.x, "y": p.y}, sensor_data.nearby_target_positions))
   puckPoistions = list(filter(lambda p: distanceBetween2Points(robotPosition, p) < PUCK_DETECTION_RADIUS, puckPositions))
 
-  def getGoalFromClosestPointToEnvBounds(closestPoint):
+  def getGoalFromClosestPointToEnvBounds():
     global curGoalTimeSteps
 
     log("Getting goal from closest point to env bounds")
@@ -138,7 +138,7 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
       # exit()
 
     # log("closestPoint", closestPointToEnvBounds.wkt)
-    newGoal = getGoalFromClosestPointToEnvBounds({"x": closestPoint.x, "y": closestPoint.y})
+    newGoal = getGoalFromClosestPointToEnvBounds()
     log("Final selected new goal:", newGoal)
 
     return newGoal
