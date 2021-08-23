@@ -88,8 +88,8 @@ for x in range(0, envXMax):
             x_directions_shifted[y][x] = ENV_ORBIT_STEEPNESS * y_directions[y][x] + x_directions[y][x]
             y_directions_shifted[y][x] = ENV_ORBIT_STEEPNESS * -1 * x_directions[y][x] + y_directions[y][x]
 
-x_goals = x_directions + X
-y_goals = y_directions + Y
+x_goals = x_directions * 10 + X
+y_goals = y_directions * 10 + Y
 
 goal_map = []
 
