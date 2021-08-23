@@ -14,6 +14,13 @@ PUCK_DETECTION_RADIUS = robotRadius * 5
 BEST_PUCK_ANGLE_THRESH = 20
 ACCEPTABLE_PUCK_ANGLE_THRESH = 70
 
+## Loading env orbit map
+MAP_SCALE = 0.25
+MAP_FILE = 'map_pickles/env_orbit_map.pickle'
+ENV_MAP = None
+with open(MAP_FILE, 'rb') as handle:
+    ENV_MAP = pickle.load(handle)
+
 def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
   puckPositions = list(map(lambda p: {"x": p.x, "y": p.y}, sensor_data.nearby_target_positions))
   puckPoistions = list(filter(lambda p: distanceBetween2Points(robotPosition, p) < PUCK_DETECTION_RADIUS, puckPositions))
@@ -23,80 +30,86 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
 
     log("Getting goal from closest point to env bounds")
 
-    len = distanceBetween2Points(robotPosition, closestPoint)
+    # len = distanceBetween2Points(robotPosition, closestPoint)
 
-    if (len == 0):
-      len = 0.01
+    # if (len == 0):
+    #   len = 0.01
 
-    translationVec = { \
-      "x": ((closestPoint["x"] - robotPosition["x"]) * robotRadius) / (len * 10), \
-      "y": ((closestPoint["y"] - robotPosition["y"]) * robotRadius) / (len * 10), \
-    }
+    # translationVec = { \
+    #   "x": ((closestPoint["x"] - robotPosition["x"]) * robotRadius) / (len * 10), \
+    #   "y": ((closestPoint["y"] - robotPosition["y"]) * robotRadius) / (len * 10), \
+    # }
 
-    midPoint = translatePointInDirection( \
-      robotPosition["x"], \
-      robotPosition["y"], \
-      translationVec["x"], \
-      translationVec["y"])
+    # midPoint = translatePointInDirection( \
+    #   robotPosition["x"], \
+    #   robotPosition["y"], \
+    #   translationVec["x"], \
+    #   translationVec["y"])
 
-    delta = robotRadius * 2
-    newGoal = midPoint
+    # delta = robotRadius * 2
+    # newGoal = midPoint
 
-    newGoal = shiftPointOfLineSegInDirOfPerpendicularBisector( \
-      midPoint["x"], \
-      midPoint["y"], \
-      robotPosition["x"], \
-      robotPosition["y"], \
-      closestPoint["x"], \
-      closestPoint["y"], \
-      delta)
+    # newGoal = shiftPointOfLineSegInDirOfPerpendicularBisector( \
+    #   midPoint["x"], \
+    #   midPoint["y"], \
+    #   robotPosition["x"], \
+    #   robotPosition["y"], \
+    #   closestPoint["x"], \
+    #   closestPoint["y"], \
+    #   delta)
 
-    newGoalPoint = Point(newGoal["x"], newGoal["y"])
-    condGoalNotReachable = newGoalPoint.distance(env.boundary) < robotRadius
+    # newGoalPoint = Point(newGoal["x"], newGoal["y"])
+    # condGoalNotReachable = newGoalPoint.distance(env.boundary) < robotRadius
     
-    log("New Goal:", newGoalPoint.wkt, \
-      "Env:", env.wkt, \
-      "Dist from Point to new goal:", newGoalPoint.distance(env.boundary), \
-      "Dist from Env bounds to new goal:", env.exterior.distance(newGoalPoint), \
-      "New goal not Valid (dist < robotRadius)?", condGoalNotReachable)
+    # log("New Goal:", newGoalPoint.wkt, \
+    #   "Env:", env.wkt, \
+    #   "Dist from Point to new goal:", newGoalPoint.distance(env.boundary), \
+    #   "Dist from Env bounds to new goal:", env.exterior.distance(newGoalPoint), \
+    #   "New goal not Valid (dist < robotRadius)?", condGoalNotReachable)
 
-    if (condGoalNotReachable):
-      log("Goal Too Close to Edge Detected!")
-      log("Old translation vector:", translationVec)
-      translationVec["x"] *= -1
-      translationVec["y"] *= -1
-      log("New translation vector:", translationVec)
+    # if (condGoalNotReachable):
+    #   log("Goal Too Close to Edge Detected!")
+    #   log("Old translation vector:", translationVec)
+    #   translationVec["x"] *= -1
+    #   translationVec["y"] *= -1
+    #   log("New translation vector:", translationVec)
 
-      midPoint = translatePointInDirection( \
-        robotPosition["x"], \
-        robotPosition["y"], \
-        translationVec["x"], \
-        translationVec["y"])
+    #   midPoint = translatePointInDirection( \
+    #     robotPosition["x"], \
+    #     robotPosition["y"], \
+    #     translationVec["x"], \
+    #     translationVec["y"])
 
-      newGoal = midPoint
+    #   newGoal = midPoint
 
-      newGoal = shiftPointOfLineSegInDirOfPerpendicularBisector(
-        midPoint["x"],
-        midPoint["y"],
-        robotPosition["x"],
-        robotPosition["y"],
-        closestPoint["x"],
-        closestPoint["y"],
-        delta)
+    #   newGoal = shiftPointOfLineSegInDirOfPerpendicularBisector(
+    #     midPoint["x"],
+    #     midPoint["y"],
+    #     robotPosition["x"],
+    #     robotPosition["y"],
+    #     closestPoint["x"],
+    #     closestPoint["y"],
+    #     delta)
       
-      log("Modified new goal:", newGoal)
+    #   log("Modified new goal:", newGoal)
 
-    if (not pointIsInsidePolygon(newGoal, env)):
-      log("GOAL OUTSIDE ENV DETECTED:")
-      log("Old Goal", newGoal)
-      newGoal = {
-        "x": robotPosition["x"] + 10 * (robotPosition["x"] - closestPoint["x"]),
-        "y": robotPosition["y"] + 10 * (robotPosition["y"] - closestPoint["y"])
-      }
-      log("New Goal", newGoal)
-      # exit()
+    # if (not pointIsInsidePolygon(newGoal, env)):
+    #   log("GOAL OUTSIDE ENV DETECTED:")
+    #   log("Old Goal", newGoal)
+    #   newGoal = {
+    #     "x": robotPosition["x"] + 10 * (robotPosition["x"] - closestPoint["x"]),
+    #     "y": robotPosition["y"] + 10 * (robotPosition["y"] - closestPoint["y"])
+    #   }
+    #   log("New Goal", newGoal)
+    #   # exit()
       
+
+    
+    x = int(robotPosition["x"] * MAP_SCALE)
+    y = int(robotPosition["y"] * MAP_SCALE)
+    goal = ENV_MAP[y][x]
     curGoalTimeSteps = 0
+    return {"x": goal[0] / MAP_SCALE, "y": goal[1] / MAP_SCALE}
 
     return newGoal
 
@@ -114,8 +127,8 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
 
     curPosPoint = Point(robotPosition["x"], robotPosition["y"])
 
-    closestPointToEnvBounds, p2 = nearest_points(env.boundary, curPosPoint)    
-    closestPoint = closestPointToEnvBounds
+    # closestPointToEnvBounds, p2 = nearest_points(env.boundary, curPosPoint)    
+    # closestPoint = closestPointToEnvBounds
 
     # IMP: orbit static obstacles as well as env
     # closestPointToStaticObstacles = getClosesetPointOfStaticObstacles(sensor_data, controller.staticObstacles)
@@ -124,7 +137,7 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
     #   print("Static Obstacles closer!", closestPointToStaticObstacles.wkt, closestPointToEnvBounds.wkt)
       # exit()
 
-    log("closestPoint", closestPointToEnvBounds.wkt)
+    # log("closestPoint", closestPointToEnvBounds.wkt)
     newGoal = getGoalFromClosestPointToEnvBounds({"x": closestPoint.x, "y": closestPoint.y})
     log("Final selected new goal:", newGoal)
 
