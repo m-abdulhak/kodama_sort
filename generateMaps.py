@@ -1,13 +1,19 @@
-import os
 import json
 import numpy as np
 import pylab as plt
 import skfmm
 import pickle
+from shapely.geometry import Point, Polygon
 
 SAVE_FIGURES = True
 SHOW_FIGURES = True
 MAP_SCALE = 0.25
+
+def pointIsInsidePolygon(point, poly):
+    try:
+        return point.within(poly)
+    except Exception as e:
+        return False
 
 def readConfig(filePath):
     # Opening JSON file
@@ -16,26 +22,25 @@ def readConfig(filePath):
     f.close()
     return data
 
+###########################################
+####        Load Configurations        ####
+###########################################
+
 config = readConfig('cvss_config.json')
 env = config["env"]
 obs = config["staticObstacles"]
-goals = list(map(lambda g: g["goal"], config["puckGroups"])) 
+goals = list(map(lambda g: g["goal"], config["puckGroups"]))
 
+envPoly = Polygon([p[0] * MAP_SCALE, p[1] * MAP_SCALE] for p in env)
 envXMax = int(max([x[0] for x in env]) * MAP_SCALE) 
 envYMax = int(max([x[1] for x in env]) * MAP_SCALE)
+print("Env:", env, " Max X:", envXMax,"Max Y:", envYMax)
 
-print("Env: Max X:", envXMax,"Max Y:", envYMax)
-staticObstacles = []
-
+staticObstaclesPolygons = []
 for o in obs:
-    xMin = int(min([x[0] for x in o]) * MAP_SCALE)
-    yMin = int(min([x[1] for x in o]) * MAP_SCALE)
-    xMax = int(max([x[0] for x in o]) * MAP_SCALE)
-    yMax = int(max([x[1] for x in o]) * MAP_SCALE)
-    print("Obstacle:", o, "=>", {"xMin": xMin, "xMax": xMax, "yMin": yMin, "yMax": yMax})
-    staticObstacles.append({"xMin": xMin, "xMax": xMax, "yMin": yMin, "yMax": yMax})
+    staticObstaclesPolygons.append(Polygon([p[0] * MAP_SCALE, p[1] * MAP_SCALE] for p in o))
+print("Obs:", {ob.wkt for ob in staticObstaclesPolygons})
 
-print("Obs:", staticObstacles)
 
 for indx, raw_goal in enumerate(goals):
     goal = [int(raw_goal[0] * MAP_SCALE), int(raw_goal[1] * MAP_SCALE)]
@@ -43,19 +48,28 @@ for indx, raw_goal in enumerate(goals):
 
     X, Y = np.meshgrid(np.linspace(0, envXMax, envXMax+1), np.linspace(0, envYMax, envYMax+1))
     map_goal_mask = -1*np.ones_like(X)
-
-    map_goal_mask[np.logical_and(X==goal[0], Y==goal[1])] = 1
-    
-    
     speed = 1*np.ones_like(X)
 
-    for o in staticObstacles:
-        speed[np.logical_and.reduce([X>o["xMin"], X<o["xMax"], Y>o["yMin"], Y<o["yMax"]])] = 0
+    map_goal_mask[np.logical_and(X==goal[0], Y==goal[1])] = 1
+    speed[np.logical_or(X>=envXMax, Y>=envYMax)] = 0
+    speed[np.logical_or(X==0, Y==0)] = 0
     
+    for x in range(0, envXMax):
+        for y in range(0, envYMax):
+            curPoint = Point(x,y)
+            for o in staticObstaclesPolygons:
+                if(pointIsInsidePolygon(curPoint, o)):
+                    speed[y][x] = 0
+
     t = skfmm.travel_time(map_goal_mask, speed, 1)
     
     t.fill_value = np.NaN
     t_filled = t.filled()
+    
+    t_filled[X==0] = t_filled[X==1] + 1
+    t_filled[Y==0] = t_filled[Y==1] + 1
+    t_filled[X==envXMax] = t_filled[X==envXMax-1] + 1
+    t_filled[Y==envYMax] = t_filled[Y==envYMax-1] + 1
     
     yG, xG = np.gradient(t_filled)
     x_directions = -10 * xG
@@ -90,9 +104,6 @@ for indx, raw_goal in enumerate(goals):
     ###############################
     
     if (SAVE_FIGURES or SHOW_FIGURES):
-        if not os.path.isdir('images'):
-            os.mkdir('images')
-
         plt.title('Goal Location')
         plt.contour(X, Y, map_goal_mask, [0], linewidths=(3), colors='red')
         if (SAVE_FIGURES):
