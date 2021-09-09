@@ -169,48 +169,50 @@ with open(file_name, 'wb') as handle:
 ##########  FIGURES  ##########
 ###############################
 
+GRAPH_STEP = 4
+
 if (SAVE_FIGURES or SHOW_FIGURES):
-    # plt.title('Orbit Border Shape')
-    # plt.contour(X, Y, map_border_mask, [0], linewidths=(3), colors='red')
-    # if (SAVE_FIGURES):
-    #     plt.savefig('images/env_orbit_1_border_mask.png', dpi=1200)
-    # if (SHOW_FIGURES):
-    #     plt.show()
+    plt.title('Orbit Border')
+    plt.contour(X, Y, map_border_mask, [0], linewidths=(3), colors='red')
+    if (SAVE_FIGURES):
+        plt.savefig('images/env_orbit_1_border_mask.png', dpi=1200)
+    if (SHOW_FIGURES):
+        plt.show()
 
-    # plt.title('Static Obstacles (Speed Map)')
-    # plt.contour(X, Y, speed, [0], linewidths=(1), colors='Blue')
-    # plt.contourf(X, Y, speed, 1)
-    # plt.colorbar()
-    # if (SAVE_FIGURES):
-    #     plt.savefig('images/env_orbit_2_speed_map.png', dpi=1200)
-    # if (SHOW_FIGURES):
-    #     plt.show()
+    plt.title('Static Obstacles (Speed Map)')
+    plt.contour(X, Y, speed, [0], linewidths=(1), colors='Blue')
+    plt.contourf(X, Y, speed, 1)
+    plt.colorbar()
+    if (SAVE_FIGURES):
+        plt.savefig('images/env_orbit_2_speed_map.png', dpi=1200)
+    if (SHOW_FIGURES):
+        plt.show()
 
-    # plt.title('Distance To Border')
-    # plt.contour(X, Y, map_border_mask,[0], linewidths=(3), colors='red')
-    # cp = plt.contourf(X, Y, t, 50)
-    # plt.colorbar()
-    # if (SAVE_FIGURES):
-    #     plt.savefig('images/env_orbit_3_distance_to_border.png', dpi=1200)
-    # if (SHOW_FIGURES):
-    #     plt.show()
+    plt.title('Distance To Border')
+    plt.contour(X, Y, map_border_mask,[0], linewidths=(3), colors='red')
+    cp = plt.contourf(X, Y, t, 50)
+    plt.colorbar()
+    if (SAVE_FIGURES):
+        plt.savefig('images/env_orbit_3_distance_to_border.png', dpi=1200)
+    if (SHOW_FIGURES):
+        plt.show()
 
-    # plt.title('Gradient of Distance To Border')
-    # cp = plt.quiver(X[::2, ::2], Y[::2, ::2], xG[::2, ::2], yG[::2, ::2])
-    # if (SAVE_FIGURES):
-    #     plt.savefig('images/env_orbit_4_gradients_of_distance_to_border.png', dpi=1200)
-    # if (SHOW_FIGURES):
-    #     plt.show()
+    plt.title('Gradient of Distance To Border')
+    cp = plt.quiver(X[::GRAPH_STEP, ::GRAPH_STEP], Y[::GRAPH_STEP, ::GRAPH_STEP], xG[::GRAPH_STEP, ::GRAPH_STEP], yG[::GRAPH_STEP, ::GRAPH_STEP])
+    if (SAVE_FIGURES):
+        plt.savefig('images/env_orbit_4_gradients_of_distance_to_border.png', dpi=1200)
+    if (SHOW_FIGURES):
+        plt.show()
 
-    # plt.title('Directions To Border')
-    # cp = plt.quiver(X[::2, ::2], Y[::2, ::2], x_directions[::2, ::2], y_directions[::2, ::2])
-    # if (SAVE_FIGURES):
-    #     plt.savefig('images/env_orbit_5_direction_to_border.png', dpi=1200)
-    # if (SHOW_FIGURES):
-    #     plt.show()
+    plt.title('Directions To Border')
+    cp = plt.quiver(X[::GRAPH_STEP, ::GRAPH_STEP], Y[::GRAPH_STEP, ::GRAPH_STEP], x_directions[::GRAPH_STEP, ::GRAPH_STEP], y_directions[::GRAPH_STEP, ::GRAPH_STEP])
+    if (SAVE_FIGURES):
+        plt.savefig('images/env_orbit_5_direction_to_border.png', dpi=1200)
+    if (SHOW_FIGURES):
+        plt.show()
 
     plt.title('Environment Orbit Directions')
-    cp = plt.quiver(X[::2, ::2], Y[::2, ::2], x_directions_shifted[::2, ::2], y_directions_shifted[::2, ::2])
+    cp = plt.quiver(X[::GRAPH_STEP, ::GRAPH_STEP], Y[::GRAPH_STEP, ::GRAPH_STEP], x_directions_shifted[::GRAPH_STEP, ::GRAPH_STEP], y_directions_shifted[::GRAPH_STEP, ::GRAPH_STEP])
     if (SAVE_FIGURES):
         plt.savefig('images/env_orbit_6_environment_orbit_directions.png', dpi=1200)
     if (SHOW_FIGURES):
