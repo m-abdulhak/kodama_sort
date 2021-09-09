@@ -22,7 +22,7 @@ MIN_DIRECTION = 30
 ENV_ORBIT_STEEPNESS = 2
 INCLUDE_OBSTACLES = True
 SAVE_FIGURES = True
-SHOW_FIGURES = True
+SHOW_FIGURES = False
 MAP_SCALE = 0.25
 ROBOT_RADIUS = 30
 CLEARANCE = ROBOT_RADIUS * MAP_SCALE
@@ -178,6 +178,8 @@ if (SAVE_FIGURES or SHOW_FIGURES):
         plt.savefig('images/env_orbit_1_border_mask.png', dpi=1200)
     if (SHOW_FIGURES):
         plt.show()
+    else:
+        plt.clf()
 
     plt.title('Static Obstacles (Speed Map)')
     plt.contour(X, Y, speed, [0], linewidths=(1), colors='Blue')
@@ -187,6 +189,8 @@ if (SAVE_FIGURES or SHOW_FIGURES):
         plt.savefig('images/env_orbit_2_speed_map.png', dpi=1200)
     if (SHOW_FIGURES):
         plt.show()
+    else:
+        plt.clf()
 
     plt.title('Distance To Border')
     plt.contour(X, Y, map_border_mask,[0], linewidths=(3), colors='red')
@@ -196,6 +200,8 @@ if (SAVE_FIGURES or SHOW_FIGURES):
         plt.savefig('images/env_orbit_3_distance_to_border.png', dpi=1200)
     if (SHOW_FIGURES):
         plt.show()
+    else:
+        plt.clf()
 
     plt.title('Gradient of Distance To Border')
     cp = plt.quiver(X[::GRAPH_STEP, ::GRAPH_STEP], Y[::GRAPH_STEP, ::GRAPH_STEP], xG[::GRAPH_STEP, ::GRAPH_STEP], yG[::GRAPH_STEP, ::GRAPH_STEP])
@@ -203,6 +209,8 @@ if (SAVE_FIGURES or SHOW_FIGURES):
         plt.savefig('images/env_orbit_4_gradients_of_distance_to_border.png', dpi=1200)
     if (SHOW_FIGURES):
         plt.show()
+    else:
+        plt.clf()
 
     plt.title('Directions To Border')
     cp = plt.quiver(X[::GRAPH_STEP, ::GRAPH_STEP], Y[::GRAPH_STEP, ::GRAPH_STEP], x_directions[::GRAPH_STEP, ::GRAPH_STEP], y_directions[::GRAPH_STEP, ::GRAPH_STEP])
@@ -210,6 +218,8 @@ if (SAVE_FIGURES or SHOW_FIGURES):
         plt.savefig('images/env_orbit_5_direction_to_border.png', dpi=1200)
     if (SHOW_FIGURES):
         plt.show()
+    else:
+        plt.clf()
 
     plt.title('Environment Orbit Directions')
     cp = plt.quiver(X[::GRAPH_STEP, ::GRAPH_STEP], Y[::GRAPH_STEP, ::GRAPH_STEP], x_directions_shifted[::GRAPH_STEP, ::GRAPH_STEP], y_directions_shifted[::GRAPH_STEP, ::GRAPH_STEP])
@@ -217,3 +227,5 @@ if (SAVE_FIGURES or SHOW_FIGURES):
         plt.savefig('images/env_orbit_6_environment_orbit_directions.png', dpi=1200)
     if (SHOW_FIGURES):
         plt.show()
+    else:
+        plt.clf()
