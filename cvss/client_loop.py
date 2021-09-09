@@ -97,6 +97,18 @@ def client_loop(config, controller):
             log("Split Points:", closestPointToStaticObs.wkt, point2, point1)
             
             # Calculate Voronoi Diagram
+            #print("\nDEBUG voronoiPoints")
+            #print(voronoiPoints)
+            #print("\nDEBUG envPoly")
+            #print(envPoly)
+            #print("\nDEBUG sensorData.pose")
+            #print(sensorData.pose)
+            #print("\nDEBUG point1")
+            #print(point1)
+            #print("\nDEBUG point2")
+            #print(point2)
+            #print("\nDEBUG robotRadius")
+            #print(robotRadius)
             bvcCells = get_voronoi_cells(voronoiPoints, envPoly, sensorData.pose, [point1, point2], buffered=True, offset=robotRadius)
 
             # log(voronoiPoints, bvcCells)

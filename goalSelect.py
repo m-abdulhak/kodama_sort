@@ -118,11 +118,11 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
     closestPoint = closestPointToEnvBounds
 
     # IMP: orbit static obstacles as well as env
-    # closestPointToStaticObstacles = getClosesetPointOfStaticObstacles(sensor_data, controller.staticObstacles)
-    # if(curPosPoint.distance(closestPointToStaticObstacles) < curPosPoint.distance(closestPointToEnvBounds)):
-    #   closestPoint = closestPointToStaticObstacles
-    #   print("Static Obstacles closer!", closestPointToStaticObstacles.wkt, closestPointToEnvBounds.wkt)
-      # exit()
+    closestPointToStaticObstacles = getClosesetPointOfStaticObstacles(sensor_data, controller.staticObstacles)
+    if(curPosPoint.distance(closestPointToStaticObstacles) < curPosPoint.distance(closestPointToEnvBounds)):
+      closestPoint = closestPointToStaticObstacles
+      print("Static Obstacles closer!", closestPointToStaticObstacles.wkt, closestPointToEnvBounds.wkt)
+    # exit()
 
     log("closestPoint", closestPointToEnvBounds.wkt)
     newGoal = getGoalFromClosestPointToEnvBounds({"x": closestPoint.x, "y": closestPoint.y})

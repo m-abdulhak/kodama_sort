@@ -17,11 +17,14 @@ class MoveTowardsPointController(ThreePiController):
         # Initialize BVC Navigator
         self.bvcNav = BvcNavigator(goal_x, goal_y)
 
-        self.maxAngleToMoveStraightToGoal = 0.6
-        self.robotIsFacingGoalMaxAngle = 0.1
+        #self.maxAngleToMoveStraightToGoal = 0.6
+        #self.robotIsFacingGoalMaxAngle = 0.1
+        self.maxAngleToMoveStraightToGoal = 0.4
+        self.robotIsFacingGoalMaxAngle = self.maxAngleToMoveStraightToGoal
 
         self.maxForwardSpeed = 0.3
-        self.maxAngularSpeed = 0.06
+        #self.maxAngularSpeed = 0.06
+        self.maxAngularSpeed = 0.03
 
         self.maxMotorSpeed = 1
         self.maxMotorSpeedBack = -1
@@ -63,23 +66,25 @@ class MoveTowardsPointController(ThreePiController):
 
             # If angle to goal is small enough => move in a straight line
             if (abs(angleToGoal) < self.maxAngleToMoveStraightToGoal):
-                # log("Moving Forward")
-                forwardSpeed = min(distanceToGoal/100, self.maxForwardSpeed) 
+                log("MOVE - Moving Forward")
+                #forwardSpeed = min(distanceToGoal/100, self.maxForwardSpeed) 
+                forwardSpeed = min(distanceToGoal/10, self.maxForwardSpeed) 
             # Else, turn in place => No Forward Speed
             else:
-                # log("Not Moving Forward")
+                log("MOVE - Not Moving Forward")
                 forwardSpeed = 0
 
             # If robot is not facing goal, turn to goal
             if (abs(angleToGoal) > self.robotIsFacingGoalMaxAngle):
-                # log("Turning")
+                log("MOVE - Turning")
                 angularSpeed = min(angleToGoal / pi, self.maxAngularSpeed)
             # Else do not turn (move in straight line)
             else:
-                # log("Not Turning")
+                log("MOVE - Not Turning")
                 angularSpeed = 0
                 
         else:
+            log("MOVE - Stopped")
             forwardSpeed = 0
             angularSpeed = 0
 
@@ -185,4 +190,4 @@ def log(*msg):
 
 # Env: Min: 40, 40 Max: 610, 440 
 log("Starting")
-execute_with_three_pi(MoveTowardsPointController(150, 190))
+execute_with_three_pi(MoveTowardsPointController(310, 245))
