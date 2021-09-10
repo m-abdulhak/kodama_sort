@@ -70,48 +70,40 @@ def client_loop(config, controller):
             # Get static obstacles
             staticObstacles = getStaticObstacles(sensorData, envStaticObstacles, puckRadius)
 
-            # Get closest point to static obstacles
-            closestPointToStaticObs = getClosesetPointOfStaticObstacles(sensorData, staticObstacles)
-            controller.setClosestPointToStaticObstacles(closestPointToStaticObs)
+            bvcCells = None
+            if (staticObstacles and len(staticObstacles) > 0):
+                # Get closest point to static obstacles
+                closestPointToStaticObs = getClosesetPointOfStaticObstacles(sensorData, staticObstacles)
+                controller.setClosestPointToStaticObstacles(closestPointToStaticObs)
 
-            # Get another point on the splitting line be shifting the closest point 
-            # in direction of Perpendicular Bisector of curPosition---closestPoint line segment
-            point1 = shiftPointOfLineSegInDirOfPerpendicularBisector( \
-                closestPointToStaticObs.x, \
-                closestPointToStaticObs.y, \
-                sensorData.pose.x, \
-                sensorData.pose.y, \
-                closestPointToStaticObs.x, \
-                closestPointToStaticObs.y, \
-                1000)
+                # Get another point on the splitting line by shifting the closest point 
+                # in direction of Perpendicular Bisector of curPosition---closestPoint line segment
+                point1 = shiftPointOfLineSegInDirOfPerpendicularBisector( \
+                    closestPointToStaticObs.x, \
+                    closestPointToStaticObs.y, \
+                    sensorData.pose.x, \
+                    sensorData.pose.y, \
+                    closestPointToStaticObs.x, \
+                    closestPointToStaticObs.y, \
+                    1000)
                 
-            point2 = shiftPointOfLineSegInDirOfPerpendicularBisector( \
-                closestPointToStaticObs.x, \
-                closestPointToStaticObs.y, \
-                closestPointToStaticObs.x, \
-                closestPointToStaticObs.y, \
-                sensorData.pose.x, \
-                sensorData.pose.y, \
-                1000)
+                point2 = shiftPointOfLineSegInDirOfPerpendicularBisector( \
+                    closestPointToStaticObs.x, \
+                    closestPointToStaticObs.y, \
+                    closestPointToStaticObs.x, \
+                    closestPointToStaticObs.y, \
+                    sensorData.pose.x, \
+                    sensorData.pose.y, \
+                    1000)
 
-            log("Split Points:", closestPointToStaticObs.wkt, point2, point1)
+                log("Split Points:", closestPointToStaticObs.wkt, point2, point1)
             
-            # Calculate Voronoi Diagram
-            #print("\nDEBUG voronoiPoints")
-            #print(voronoiPoints)
-            #print("\nDEBUG envPoly")
-            #print(envPoly)
-            #print("\nDEBUG sensorData.pose")
-            #print(sensorData.pose)
-            #print("\nDEBUG point1")
-            #print(point1)
-            #print("\nDEBUG point2")
-            #print(point2)
-            #print("\nDEBUG robotRadius")
-            #print(robotRadius)
-            bvcCells = get_voronoi_cells(voronoiPoints, envPoly, sensorData.pose, [point1, point2], buffered=True, offset=robotRadius)
-
-            # log(voronoiPoints, bvcCells)
+                # Calculate Voronoi Diagram
+                bvcCells = get_voronoi_cells(voronoiPoints, envPoly, sensorData.pose, [point1, point2], buffered=True, offset=robotRadius)
+            else:
+                bvcCells = get_voronoi_cells(voronoiPoints, envPoly, sensorData.pose, None, buffered=True, offset=robotRadius)
+            
+            log(voronoiPoints, bvcCells)
 
             # Extract this robot cell from voronoi cells
             bvcCell = bvcCells[0]
