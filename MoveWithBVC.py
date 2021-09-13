@@ -17,14 +17,11 @@ class MoveTowardsPointController(ThreePiController):
         # Initialize BVC Navigator
         self.bvcNav = BvcNavigator(goal_x, goal_y)
 
-        #self.maxAngleToMoveStraightToGoal = 0.6
-        #self.robotIsFacingGoalMaxAngle = 0.1
-        self.maxAngleToMoveStraightToGoal = 0.4
-        self.robotIsFacingGoalMaxAngle = self.maxAngleToMoveStraightToGoal
+        self.maxAngleToMoveStraightToGoal = 0.6
+        self.robotIsFacingGoalMaxAngle = 0.1
 
         self.maxForwardSpeed = 0.3
-        #self.maxAngularSpeed = 0.06
-        self.maxAngularSpeed = 0.03
+        self.maxAngularSpeed = 0.06
 
         self.maxMotorSpeed = 1
         self.maxMotorSpeedBack = -1
@@ -70,20 +67,19 @@ class MoveTowardsPointController(ThreePiController):
                 forwardSpeed = min(distanceToGoal/10, self.maxForwardSpeed) 
             # Else, turn in place => No Forward Speed
             else:
-                log("MOVE - Not Moving Forward")
+                # log("Not Moving Forward")
                 forwardSpeed = 0
 
             # If robot is not facing goal, turn to goal
             if (abs(angleToGoal) > self.robotIsFacingGoalMaxAngle):
-                log("MOVE - Turning")
+                # log("Turning")
                 angularSpeed = min(angleToGoal / pi, self.maxAngularSpeed)
             # Else do not turn (move in straight line)
             else:
-                log("MOVE - Not Turning")
+                # log("Not Turning")
                 angularSpeed = 0
                 
         else:
-            log("MOVE - Stopped")
             forwardSpeed = 0
             angularSpeed = 0
 
@@ -180,7 +176,7 @@ class MoveTowardsPointController(ThreePiController):
         return str(now) + " , " + str(sensorData).replace("\n", "") + " , " + str(bvcCell) + " , " + str(self.goal) + "\n"
 
 
-logging = False
+logging = True
 # logging = True
 
 def log(*msg):
@@ -189,4 +185,4 @@ def log(*msg):
 
 # Env: Min: 40, 40 Max: 610, 440 
 log("Starting")
-execute_with_three_pi(MoveTowardsPointController(310, 245))
+execute_with_three_pi(MoveTowardsPointController(150, 190))
