@@ -34,8 +34,7 @@ MOTOR_RIGHT_BACKWARD_CMD ="\xC6"
 
 # Internally imposed speed to be sent to either motor.  Should be positive with
 # a maximum possible value of 127.
-#MAX_SPEED = 40
-MAX_SPEED = 45
+MAX_SPEED = 40
 
 class ThreePi:
 
