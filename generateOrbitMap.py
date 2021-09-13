@@ -22,7 +22,7 @@ MIN_DIRECTION = 30
 ENV_ORBIT_STEEPNESS = 2
 INCLUDE_OBSTACLES = True
 SAVE_FIGURES = True
-SHOW_FIGURES = False
+SHOW_FIGURES = True
 MAP_SCALE = 0.25
 ROBOT_RADIUS = 30
 CLEARANCE = ROBOT_RADIUS * MAP_SCALE
@@ -53,16 +53,21 @@ print("Obs:", {ob.wkt for ob in staticObstaclesPolygons})
 
 X, Y = np.meshgrid(np.linspace(0, envXMax, envXMax+1), np.linspace(0, envYMax, envYMax+1))
 map_border_mask = -1*np.ones_like(X)
+map_border_mask_raw = -1*np.ones_like(X)
 speed = 1*np.ones_like(X)
 
 for x in range(0, envXMax):
     for y in range(0, envYMax):
         curPoint = Point(x,y)
+        if(curPoint.within(envPoly)):
+            map_border_mask_raw[y][x] = 1
         if(curPoint.within(envPoly) and envPoly.exterior.distance(curPoint) > CLEARANCE):
             map_border_mask[y][x] = 1
         
         if(INCLUDE_OBSTACLES):
             for o in staticObstaclesPolygons:
+                if(curPoint.distance(o) == 0):
+                    map_border_mask_raw[y][x] = -1
                 if(curPoint.distance(o) < CLEARANCE):
                     map_border_mask[y][x] = -1
 
@@ -172,6 +177,7 @@ with open(file_name, 'wb') as handle:
 GRAPH_STEP = 4
 
 if (SAVE_FIGURES or SHOW_FIGURES):
+    """
     plt.title('Orbit Border')
     plt.contour(X, Y, map_border_mask, [0], linewidths=(3), colors='red')
     if (SAVE_FIGURES):
@@ -220,8 +226,11 @@ if (SAVE_FIGURES or SHOW_FIGURES):
         plt.show()
     else:
         plt.clf()
+    """
 
     plt.title('Environment Orbit Directions')
+    plt.contour(X, Y, map_border_mask_raw, [0], linewidths=(3), colors='blue')
+    plt.contour(X, Y, map_border_mask, [0], linewidths=(3), colors='red')
     cp = plt.quiver(X[::GRAPH_STEP, ::GRAPH_STEP], Y[::GRAPH_STEP, ::GRAPH_STEP], x_directions_shifted[::GRAPH_STEP, ::GRAPH_STEP], y_directions_shifted[::GRAPH_STEP, ::GRAPH_STEP])
     if (SAVE_FIGURES):
         plt.savefig('images/env_orbit_6_environment_orbit_directions.png', dpi=1200)

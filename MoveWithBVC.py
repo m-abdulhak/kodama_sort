@@ -180,7 +180,7 @@ class MoveTowardsPointController(ThreePiController):
         return str(now) + " , " + str(sensorData).replace("\n", "") + " , " + str(bvcCell) + " , " + str(self.goal) + "\n"
 
 
-logging = True
+logging = False
 # logging = True
 
 def log(*msg):
