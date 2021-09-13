@@ -103,10 +103,6 @@ def voronoi_finite_polygons_2d(vor, radius=None):
             continue
 
         # reconstruct a non-finite region
-        #print("\nDEBUG all_ridges:")
-        #print(all_ridges)
-        #print("\nDEBUG p1:")
-        #print(p1)
         ridges = all_ridges[p1]
         new_region = [v for v in vertices if v >= 0]
 
