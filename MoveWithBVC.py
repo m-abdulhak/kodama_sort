@@ -18,15 +18,18 @@ class MoveTowardsPointController(ThreePiController):
         self.bvcNav = BvcNavigator(goal_x, goal_y)
 
         self.maxAngleToMoveStraightToGoal = 0.6
-        self.robotIsFacingGoalMaxAngle = 0.1
+        #self.robotIsFacingGoalMaxAngle = 0.1
+        self.robotIsFacingGoalMaxAngle = 0.4
 
         self.maxForwardSpeed = 0.3
         self.maxAngularSpeed = 0.06
 
         self.maxMotorSpeed = 1
         self.maxMotorSpeedBack = -1
-        self.minMotorSpeed = .5
-        self.minMotorSpeedBack = -.5
+        #self.minMotorSpeed = .5
+        #self.minMotorSpeedBack = -.5
+        self.minMotorSpeed = .35
+        self.minMotorSpeedBack = - self.minMotorSpeed
 
         # logging
         self.logSize = 0
@@ -63,23 +66,25 @@ class MoveTowardsPointController(ThreePiController):
 
             # If angle to goal is small enough => move in a straight line
             if (abs(angleToGoal) < self.maxAngleToMoveStraightToGoal):
-                # log("Moving Forward")
+                log("Moving Forward")
                 forwardSpeed = min(distanceToGoal/10, self.maxForwardSpeed) 
             # Else, turn in place => No Forward Speed
             else:
-                # log("Not Moving Forward")
+                log("Not Moving Forward")
                 forwardSpeed = 0
 
             # If robot is not facing goal, turn to goal
             if (abs(angleToGoal) > self.robotIsFacingGoalMaxAngle):
-                # log("Turning")
-                angularSpeed = min(angleToGoal / pi, self.maxAngularSpeed)
+                log("Turning")
+                #angularSpeed = min(angleToGoal / pi, self.maxAngularSpeed)
+                angularSpeed = 0.1 * angleToGoal / pi
             # Else do not turn (move in straight line)
             else:
-                # log("Not Turning")
+                log("Not Turning")
                 angularSpeed = 0
                 
         else:
+            log("Stopped")
             forwardSpeed = 0
             angularSpeed = 0
 

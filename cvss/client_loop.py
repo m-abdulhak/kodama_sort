@@ -245,7 +245,7 @@ def getStaticObstacles(sensorData, envStaticObstacles, puckRadius):
 
     return obstacles
 
-logging = True
+logging = False
 # logging = True
 
 def log(*msg):

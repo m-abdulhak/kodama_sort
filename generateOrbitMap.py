@@ -19,7 +19,7 @@ def readConfig(filePath):
     return data
 
 MIN_DIRECTION = 30
-ENV_ORBIT_STEEPNESS = 2
+ENV_ORBIT_STEEPNESS = 5
 INCLUDE_OBSTACLES = True
 SAVE_FIGURES = True
 SHOW_FIGURES = True

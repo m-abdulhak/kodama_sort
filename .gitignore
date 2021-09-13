@@ -1,3 +1,5 @@
+images/*
+map_pickles/*
 logs/*
 
 # Byte-compiled / optimized / DLL files

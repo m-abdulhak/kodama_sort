@@ -180,7 +180,7 @@ def plot_polygons_points(cells, points):
     plt.show()
 
 
-logging = True
+logging = False
 # logging = True
 
 def log(*msg):

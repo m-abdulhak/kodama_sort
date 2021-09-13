@@ -69,7 +69,7 @@ def getPuckManeuverGoal(robotPosition, puckPosition, group):
       goal["x"], \
       goal["y"])
 
-logging = True
+logging = False
 # logging = True
 
 def log(*msg):

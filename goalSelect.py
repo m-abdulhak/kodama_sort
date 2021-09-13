@@ -150,7 +150,7 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
     goal = limitGoalWithinEnvOutsideStaicObstacles(goal)
     return goal
 
-logging = True
+logging = False
 # logging = True
 
 def log(*msg):

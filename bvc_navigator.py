@@ -441,7 +441,7 @@ class BvcNavigator:
         ret =  distanceBetween2Points(self.position, point)
         return ret
 
-logging = True
+logging = False
 # logging = True
 
 def log(*msg):
