@@ -31,6 +31,9 @@ class MoveTowardsPointController(ThreePiController):
         self.minMotorSpeed = .35
         self.minMotorSpeedBack = - self.minMotorSpeed
 
+        # Maximum run-time in seconds
+        self.maxRunTime = 1 * 60
+
         # logging
         self.logSize = 0
         now = time.time()
@@ -40,6 +43,9 @@ class MoveTowardsPointController(ThreePiController):
             log("Loggin to : {}".format(self.logFileLocation))
         except Exception as e:
             log("Error! Cannot Open Log File!", e)
+
+        log("Recording start time")
+        self.start_time = time.time()
         
     def setGoal(self, x, y):
         log("Setting Goal To:", x, y)
@@ -112,6 +118,11 @@ class MoveTowardsPointController(ThreePiController):
         return v_left, v_right
 
     def update(self, sensor_data, bvcCell):
+        elapsed_time = time.time() - self.start_time
+        if elapsed_time > self.maxRunTime:
+            print("Run-time elapsed.")
+            return True
+
         # Get Robot Position and orientation
         x = sensor_data.pose.x
         y = sensor_data.pose.y
