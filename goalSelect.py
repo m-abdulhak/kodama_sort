@@ -14,6 +14,19 @@ PUCK_DETECTION_RADIUS = robotRadius * 5
 BEST_PUCK_ANGLE_THRESH = 20
 ACCEPTABLE_PUCK_ANGLE_THRESH = 70
 
+# Handling Getting Stuck
+lastPosition = None
+durationAtCurPosition = 0
+stuck = False
+avoidingStuckDuration = 0
+MIN_STUCK_MANEUVER_DURATION = 30
+SAME_POSITION_DISTANCE_THRESHOLD = robotRadius / 50
+STUCK_DURATION_THRESHOLD = 30
+
+# Control Strategy Angles Thresholds
+ANGLE_OPTIMAL_THRESHOLD = 15
+ANGLE_ACCEPTABLE_THRESHOLD = 75
+
 ## Loading env orbit map
 MAP_SCALE = 0.25
 MAP_FILE = 'map_pickles/env_orbit_map.pickle'
@@ -21,7 +34,7 @@ ENV_MAP = None
 with open(MAP_FILE, 'rb') as handle:
     ENV_MAP = pickle.load(handle)
 
-def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
+def updateGoal(controller, robotPosition, bvcCell, sensor_data, env, oldGoal):
   puckPositions = list(map(lambda p: {"x": p.x, "y": p.y}, sensor_data.nearby_target_positions))
   puckPoistions = list(filter(lambda p: distanceBetween2Points(robotPosition, p) < PUCK_DETECTION_RADIUS, puckPositions))
 
@@ -53,6 +66,22 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
     log("Final selected new goal:", newGoal)
 
     return newGoal
+
+  def getGoalFromStuckManeuver():
+    envOrbitGoal = getGoalFromEnvOrbit()
+    vecToEnvOrbitGoal = {
+      "x": envOrbitGoal["x"] - robotPosition["x"],
+      "y": envOrbitGoal["y"] - robotPosition["y"],
+    }
+    rotatedEnvOribtGoal = {
+      "x": -1 * vecToEnvOrbitGoal["y"],
+      "y": vecToEnvOrbitGoal["x"],
+    }
+
+    return {
+      "x": robotPosition["x"] + rotatedEnvOribtGoal["x"],
+      "y": robotPosition["y"] + rotatedEnvOribtGoal["y"],
+    }
 
   def getGoalFromPuck(puckPosition, normalizedAngle):
     if (normalizedAngle < BEST_PUCK_ANGLE_THRESH):
@@ -137,6 +166,36 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env):
   
     return newGoal
 
+  # If robot was stuck and is still recovering, do not change robot goal
+  if (stuck and avoidingStuckDuration <= MIN_STUCK_MANEUVER_DURATION):
+    avoidingStuckDuration += 1
+    return oldGoal
+  
+  # Else, consider maneuver over, reset counters
+  stuck = False
+  avoidingStuckDuration = 0
+
+  # Calc distance to last recorded position
+  distToLastPos = distanceBetween2Points(robotPosition, lastPosition) if lastPosition else None
+
+  # If robot is close enough to be considered at same position
+  if (distToLastPos != None and distToLastPos <= SAME_POSITION_DISTANCE_THRESHOLD):
+    # Do not change recorded position, increment stuck timer by 1
+    durationAtCurPosition += 1
+
+  # If stuck timer, reaches threshold to be considered stuck
+  if (durationAtCurPosition >= STUCK_DURATION_THRESHOLD):
+    # Reset stuck timer, set state to stuck, start stuck maneuver timer and start maneuver
+    durationAtCurPosition = 0
+    stuck = True
+    avoidingStuckDuration = 0
+    print("Starting Stuck Maneuver")
+    goal = getGoalFromStuckManeuver()
+    goal = limitGoalWithinEnvOutsideStaicObstacles(goal)
+    return goal
+
+  # Update last position and continuer normal operations
+  lastPosition = { "x" : robotPosition["x"], "y" : robotPosition["y"] }
   log("Available Pucks:", puckPositions)
   bestPuck = selectBestNearbyPuck()
   log("bestPuck:",bestPuck)
