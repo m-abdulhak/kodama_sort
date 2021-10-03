@@ -195,6 +195,7 @@ if (SAVE_FIGURES or SHOW_FIGURES):
         plt.clf()
 
     plt.title('Gradient of Distance To Border')
+    plt.contour(X, Y, map_border_mask, [0], linewidths=(3), colors='red', alpha=0.5)
     cp = plt.quiver(X[::GRAPH_STEP, ::GRAPH_STEP], Y[::GRAPH_STEP, ::GRAPH_STEP], gradients_x[::GRAPH_STEP, ::GRAPH_STEP], gradients_y[::GRAPH_STEP, ::GRAPH_STEP])
     if (SAVE_FIGURES):
         plt.savefig('images/env_orbit_4_gradients_of_distance_to_border.png', dpi=1200)
@@ -204,6 +205,7 @@ if (SAVE_FIGURES or SHOW_FIGURES):
         plt.clf()
 
     plt.title('Directions To Border')
+    plt.contour(X, Y, map_border_mask, [0], linewidths=(3), colors='red', alpha=0.5)
     cp = plt.quiver(X[::GRAPH_STEP, ::GRAPH_STEP], Y[::GRAPH_STEP, ::GRAPH_STEP], vec_to_border_x[::GRAPH_STEP, ::GRAPH_STEP], vec_to_border_y[::GRAPH_STEP, ::GRAPH_STEP])
     if (SAVE_FIGURES):
         plt.savefig('images/env_orbit_5_direction_to_border.png', dpi=1200)
@@ -213,6 +215,7 @@ if (SAVE_FIGURES or SHOW_FIGURES):
         plt.clf()
 
     plt.title('Environment Orbit Directions')
+    plt.contour(X, Y, map_border_mask, [0], linewidths=(3), colors='red', alpha=0.5)
     cp = plt.quiver(X[::GRAPH_STEP, ::GRAPH_STEP], Y[::GRAPH_STEP, ::GRAPH_STEP], orbit_vec_x[::GRAPH_STEP, ::GRAPH_STEP], orbit_vec_y[::GRAPH_STEP, ::GRAPH_STEP])
     if (SAVE_FIGURES):
         plt.savefig('images/env_orbit_6_environment_orbit_directions.png', dpi=1200)
