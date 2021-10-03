@@ -27,10 +27,13 @@ def loadMaps(files):
   return m
 
 def getPuckGoal(puckPosition, group):
-  x = int(puckPosition["x"] * MAP_SCALE)
-  y = int(puckPosition["y"] * MAP_SCALE)
-  goal = maps[group][y][x]
-  return {"x": goal[0] / MAP_SCALE, "y": goal[1] / MAP_SCALE}
+  try:
+    x = int(puckPosition["x"] * MAP_SCALE)
+    y = int(puckPosition["y"] * MAP_SCALE)
+    goal = maps[group][y][x]
+    return {"x": goal[0] / MAP_SCALE, "y": goal[1] / MAP_SCALE}
+  except Exception as e:
+      return {"x" : 0, "y": 0}
 
 def puckDistanceTo(puckPosition, otherPosition):
   distance = distanceBetween2Points(puckPosition, otherPosition)

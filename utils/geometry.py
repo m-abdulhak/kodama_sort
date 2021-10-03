@@ -35,33 +35,36 @@ def closestPointInLineToPoint(x, y, x1, y1, x2, y2):
     return {"x":xx, "y":yy}
 
 def closestPointInLineSegToPoint(x, y, x1, y1, x2, y2):
-    A = x - x1
-    B = y - y1
-    C = x2 - x1
-    D = y2 - y1
+    try:
+        A = x - x1
+        B = y - y1
+        C = x2 - x1
+        D = y2 - y1
 
-    dot = A * C + B * D
-    len_sq = C * C + D * D
-    param = -1
+        dot = A * C + B * D
+        len_sq = C * C + D * D
+        param = -1
 
-    # in case of 0 length line
-    if (len_sq != 0):
-        param = dot / len_sq
+        # in case of 0 length line
+        if (len_sq != 0):
+            param = dot / len_sq
 
-    xx = None
-    yy =  None
+        xx = None
+        yy =  None
 
-    if (param < 0):
-        xx = x1
-        yy = y1
-    elif (param > 1):
-        xx = x2
-        yy = y2
-    else:
-        xx = x1 + param * C
-        yy = y1 + param * D
+        if (param < 0):
+            xx = x1
+            yy = y1
+        elif (param > 1):
+            xx = x2
+            yy = y2
+        else:
+            xx = x1 + param * C
+            yy = y1 + param * D
 
-    return {"x":xx, "y":yy}
+        return {"x":xx, "y":yy}
+    except Exception as ex:
+        return {"x": 0, "y": 0}
 
 def distanceBetween2Points(pos1, pos2):
     ret =  sqrt( (pos1["x"] - pos2["x"]) * (pos1["x"] - pos2["x"]) + (pos1["y"] - pos2["y"]) * (pos1["y"] - pos2["y"]))
@@ -189,13 +192,16 @@ def radToDeg(radians):
 # * B center point
 # */
 def angleBetweenThreePointsRad(A, B, C):
-    AB = sqrt((B["x"] - A["x"]) ** 2 + (B["y"] - A["y"]) ** 2)
-    BC = sqrt((B["x"] - C["x"]) ** 2 + (B["y"] - C["y"]) ** 2)
-    AC = sqrt((C["x"] - A["x"]) ** 2 + (C["y"] - A["y"]) ** 2)
+    try:
+        AB = sqrt((B["x"] - A["x"]) ** 2 + (B["y"] - A["y"]) ** 2)
+        BC = sqrt((B["x"] - C["x"]) ** 2 + (B["y"] - C["y"]) ** 2)
+        AC = sqrt((C["x"] - A["x"]) ** 2 + (C["y"] - A["y"]) ** 2)
 
-    if ((2 * BC * AB) != 0):
-        return acos((BC * BC + AB * AB - AC * AC) / (2 * BC * AB))
-    else:
+        if ((2 * BC * AB) != 0):
+            return acos((BC * BC + AB * AB - AC * AC) / (2 * BC * AB))
+        else:
+            return 0
+    except Exception as e:
         return 0
 
 def angleBetweenThreePointsDeg(A, B, C):

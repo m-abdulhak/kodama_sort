@@ -19,9 +19,9 @@ lastPosition = None
 durationAtCurPosition = 0
 stuck = False
 avoidingStuckDuration = 0
-MIN_STUCK_MANEUVER_DURATION = 30
+MIN_STUCK_MANEUVER_DURATION = 20
 SAME_POSITION_DISTANCE_THRESHOLD = robotRadius / 50
-STUCK_DURATION_THRESHOLD = 30
+STUCK_DURATION_THRESHOLD = 20
 
 # Control Strategy Angles Thresholds
 ANGLE_OPTIMAL_THRESHOLD = 15
@@ -37,6 +37,10 @@ with open(MAP_FILE, 'rb') as handle:
 def updateGoal(controller, robotPosition, bvcCell, sensor_data, env, oldGoal):
   puckPositions = list(map(lambda p: {"x": p.x, "y": p.y}, sensor_data.nearby_target_positions))
   puckPoistions = list(filter(lambda p: distanceBetween2Points(robotPosition, p) < PUCK_DETECTION_RADIUS, puckPositions))
+  global lastPosition
+  global durationAtCurPosition
+  global stuck
+  global avoidingStuckDuration
 
   def getGoalFromClosestPointToEnvBounds():
     global curGoalTimeSteps
@@ -57,7 +61,7 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env, oldGoal):
       curGoalTimeSteps < minCurGoalTimeSteps and \
       not controller.bvcNav.reached(controller.goal)):
       curGoalTimeSteps += 10
-      log("Prev goal")
+      log("Minimum goal seek time not reached, using prev goal.")
       return controller.goal
 
     curPosPoint = Point(robotPosition["x"], robotPosition["y"])
@@ -68,20 +72,27 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env, oldGoal):
     return newGoal
 
   def getGoalFromStuckManeuver():
-    envOrbitGoal = getGoalFromEnvOrbit()
+    envOrbitGoal = getGoalFromOrbit()
+    envOrbitGoal = limitGoalWithinEnvOutsideStaicObstacles(envOrbitGoal)
+    print ("================ Old Env Orbit Goal: ", envOrbitGoal)
+
     vecToEnvOrbitGoal = {
       "x": envOrbitGoal["x"] - robotPosition["x"],
       "y": envOrbitGoal["y"] - robotPosition["y"],
     }
     rotatedEnvOribtGoal = {
-      "x": -1 * vecToEnvOrbitGoal["y"],
-      "y": vecToEnvOrbitGoal["x"],
+      "x": vecToEnvOrbitGoal["y"],
+      "y": -1 * vecToEnvOrbitGoal["x"],
     }
 
-    return {
+    newG = {
       "x": robotPosition["x"] + rotatedEnvOribtGoal["x"],
       "y": robotPosition["y"] + rotatedEnvOribtGoal["y"],
     }
+
+    print ("================ New Maneuver Goal: ", newG)
+    # exit()
+    return newG
 
   def getGoalFromPuck(puckPosition, normalizedAngle):
     if (normalizedAngle < BEST_PUCK_ANGLE_THRESH):
@@ -153,6 +164,7 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env, oldGoal):
     #   print("Goal Not inside Env, limiting goal to env bounds!", goal)
     #   goal = {"x": (goal["x"] + robotPosition["x"]) / 2, "y": (goal["y"] + robotPosition["y"]) / 2}
     #   print("New goal:", goal)
+    # exit()
     newGoal = {"x": goal["x"], "y": goal["y"]}
     
     goalDistanceToStaticObstacles = list(map(lambda obs: Point(newGoal["x"], newGoal["y"]).distance(obs), controller.staticObstacles))
@@ -169,6 +181,7 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env, oldGoal):
   # If robot was stuck and is still recovering, do not change robot goal
   if (stuck and avoidingStuckDuration <= MIN_STUCK_MANEUVER_DURATION):
     avoidingStuckDuration += 1
+    print("STILL MANEUVERING FRIM GETTING STUCK, No GOAL CHANGE!", avoidingStuckDuration, " / ", MIN_STUCK_MANEUVER_DURATION)
     return oldGoal
   
   # Else, consider maneuver over, reset counters
@@ -181,6 +194,7 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env, oldGoal):
   # If robot is close enough to be considered at same position
   if (distToLastPos != None and distToLastPos <= SAME_POSITION_DISTANCE_THRESHOLD):
     # Do not change recorded position, increment stuck timer by 1
+    print("Position Not Changed For:", durationAtCurPosition)
     durationAtCurPosition += 1
 
   # If stuck timer, reaches threshold to be considered stuck
@@ -189,7 +203,7 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env, oldGoal):
     durationAtCurPosition = 0
     stuck = True
     avoidingStuckDuration = 0
-    print("Starting Stuck Maneuver")
+    print("Stuck Detected! Starting Stuck Maneuver!")
     goal = getGoalFromStuckManeuver()
     goal = limitGoalWithinEnvOutsideStaicObstacles(goal)
     return goal
