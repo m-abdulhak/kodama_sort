@@ -137,7 +137,7 @@ class MoveTowardsPointController(ThreePiController):
 
         # Get new goal
         log("*** Calculating New Goal ***")
-        newGoal = updateGoal(self, {"x": x, "y": y}, bvcCell, sensor_data, self.env)
+        newGoal = updateGoal(self, {"x": x, "y": y}, bvcCell, sensor_data, self.env, self.goal)
         log("*** New Goal ***", newGoal)
         self.setGoal(newGoal["x"], newGoal["y"])
 
