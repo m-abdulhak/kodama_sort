@@ -32,7 +32,7 @@ class MoveTowardsPointController(ThreePiController):
         self.minMotorSpeedBack = - self.minMotorSpeed
 
         # Maximum run-time in seconds
-        self.maxRunTime = 1 * 60
+        self.maxRunTime = 10 * 60
 
         # logging
         self.logSize = 0
@@ -40,7 +40,7 @@ class MoveTowardsPointController(ThreePiController):
         self.logFileLocation = 'logs/log-{}-{}.txt'.format(str(self.bvcNav.deadLockRecoveryAlgorithm), now)
         try:
             self.logFile = open(self.logFileLocation, 'w+')
-            log("Loggin to : {}".format(self.logFileLocation))
+            log("Logging to : {}".format(self.logFileLocation))
         except Exception as e:
             log("Error! Cannot Open Log File!", e)
 
