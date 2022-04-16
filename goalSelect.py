@@ -21,7 +21,7 @@ stuck = False
 avoidingStuckDuration = 0
 MIN_STUCK_MANEUVER_DURATION = 20
 SAME_POSITION_DISTANCE_THRESHOLD = robotRadius / 50
-STUCK_DURATION_THRESHOLD = 20
+STUCK_DURATION_THRESHOLD = 40
 
 # Control Strategy Angles Thresholds
 ANGLE_OPTIMAL_THRESHOLD = 15
@@ -35,8 +35,8 @@ with open(MAP_FILE, 'rb') as handle:
     ENV_MAP = pickle.load(handle)
 
 def updateGoal(controller, robotPosition, bvcCell, sensor_data, env, oldGoal):
-  puckPositions = list(map(lambda p: {"x": p.x, "y": p.y}, sensor_data.nearby_target_positions))
-  puckPoistions = list(filter(lambda p: distanceBetween2Points(robotPosition, p) < PUCK_DETECTION_RADIUS, puckPositions))
+  puckPositions = list(map(lambda p: {"x": p.x, "y": p.y, "type": p.puck_type or 0}, sensor_data.nearby_target_positions))
+  puckPositions = list(filter(lambda p: distanceBetween2Points(robotPosition, p) < PUCK_DETECTION_RADIUS, puckPositions))
   global lastPosition
   global durationAtCurPosition
   global stuck
@@ -122,17 +122,17 @@ def updateGoal(controller, robotPosition, bvcCell, sensor_data, env, oldGoal):
     def puckIsValid(position, group):
       if (not puckReachedGoal(position, group)):
         # g = getGoalFromPuck(p)
-        # condInRobotVorCell = pointIsInsidePolygon(p.position, robot.BVC);
-        # condReachableInEnv = robot.pointIsReachableInEnvBounds(g);
+        condInRobotVorCell = pointIsInsidePolygon(position, bvcCell)
+        # condReachableInEnv = robot.pointIsReachableInEnvBounds(g)
         # return condInRobotVorCell and condReachableInEnv and condReachableOutOfStaticObs;
-        return True
+        return condInRobotVorCell if random.random() > 0.5 else True
       return False
 
-    validPucks = list(filter(lambda p: puckIsValid(p, 0), puckPositions))
+    validPucks = list(filter(lambda p: puckIsValid(p, p['type']), puckPositions))
     log("Valid Pucks:", validPucks)
 
     for puck in validPucks:
-      ang = puckNormalizedAngle(robotPosition, puck, 0)
+      ang = puckNormalizedAngle(robotPosition, puck, puck['type'])
       log("Angle to local goal:", puck, ang)
       if(puckDistanceTo(puck, robotPosition) < PUCK_DETECTION_RADIUS):
         if(ang < ACCEPTABLE_PUCK_ANGLE_THRESH):
@@ -228,4 +228,4 @@ logging = True
 
 def log(*msg):
     if(logging):
-        print(msg)
+        print(" ".join(map(str,msg)))

@@ -32,7 +32,7 @@ class MoveTowardsPointController(ThreePiController):
         self.minMotorSpeedBack = - self.minMotorSpeed
 
         # Maximum run-time in seconds
-        self.maxRunTime = 10 * 60
+        self.maxRunTime = 20 * 60
 
         # logging
         self.logSize = 0
@@ -192,7 +192,7 @@ class MoveTowardsPointController(ThreePiController):
         return str(now) + " , " + str(sensorData).replace("\n", "") + " , " + str(bvcCell) + " , " + str(self.goal) + "\n"
 
 
-logging = True
+logging = False
 # logging = True
 
 def log(*msg):

@@ -151,7 +151,8 @@ def getSensorData(config, tagID):
         log("Sending request for sensor data!")
         sensorSimulator.send(requestData.SerializeToString())
         sensorData = cvss_msg_pb2.SensorData()
-        msg = sensorSimulator.recv(128)
+        #msg = sensorSimulator.recv(128)
+        msg = sensorSimulator.recv(512)
         
         # Close Connection
         log("Closing Connection!")
@@ -168,11 +169,11 @@ def getSensorData(config, tagID):
         return sensorData
         
     except socket.error as e:
-        print 'Error connecting to CVSS.'
+        print ('Error connecting to CVSS.')
         return False
     except Exception as e:
         print ('Error getting sensor Data: ')
-        print str(e)
+        print (str(e))
 
 def extractVoronoiPoints(sensorData, defaultVoronoiPoints):
     # Remove goal tag from neighbors if exists

@@ -1,6 +1,6 @@
 import json
 import numpy as np
-import pylab as plt
+import matplotlib.pyplot as plt
 import skfmm
 import pickle
 from math import sqrt

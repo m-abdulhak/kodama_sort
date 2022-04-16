@@ -72,14 +72,14 @@ def getPuckManeuverGoal(robotPosition, puckPosition, group):
       goal["x"], \
       goal["y"])
 
-logging = False
-# logging = True
+# logging = False
+logging = True
 
 def log(*msg):
     if(logging):
-        print(msg)
+        print(" ".join(map(str,msg)))
 
-map_files = ['map_pickles/0_goal_map.pickle']
+map_files = ['map_pickles/0_goal_map.pickle', 'map_pickles/1_goal_map.pickle']
 maps = loadMaps(map_files)
 
 
